@@ -1,0 +1,12 @@
+/.quarto/
+/_site/
+/*_files/
+/*.html
+/*.docx
+/*.pdf
+*.log
+/private/
+/.env
+/.env.*
+/.DS_Store
+/Thumbs.db

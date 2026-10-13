@@ -1,0 +1,19 @@
+---
+title: "Synthetic evidence-linked CV"
+filters:
+  - kai-prince-sfhea/interactive-cv
+metadata-files:
+  - example-cv.yml
+format:
+  html: default
+  docx: default
+---
+
+This fictional example demonstrates intersecting experience. All names,
+claims and review decisions below are illustrative. It is not Kai's CV.
+
+Read the complete record list, follow its evidence links, or use the optional
+HTML filters. Word output contains the same static records and relationships.
+
+::: {.cv-index}
+:::

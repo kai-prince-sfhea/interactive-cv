@@ -1,0 +1,202 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:quarto:interactive-cv:config:v1",
+  "title": "Interactive CV authoring configuration v1",
+  "description": "Structural reference for the value of interactive-cv metadata in experimental runtime 0.0.3. This is not a schema for an entire Quarto document, producer interchange or browser export model.",
+  "$comment": "Copyright 2026 Kai Prince. SPDX-License-Identifier: Apache-2.0. No automatic Quarto editor integration is registered. Validate JSON-compatible values after author metadata selection. Runtime additionally checks UTF-8 byte limits, actual calendar dates, chronology, field conflicts, unique IDs and anchors, reference closure and endpoint types, skill cycles/depth, page title binding and whole-model bounds. This schema cannot establish consent, rights, truth, causal attribution, accessibility or release inventory completeness. Character limits here do not replace runtime byte limits. Explicit enabled:false and inactive service/private public maps are intentionally bypassed as in the runtime.",
+  "type": "object",
+  "if": {"required": ["enabled"], "properties": {"enabled": {"const": false}}},
+  "then": {},
+  "else": {
+    "properties": {
+      "enabled": {"type": "boolean", "default": true},
+      "as-of": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}(?![\\s\\S])"},
+      "services": {"type": "boolean", "default": false},
+      "exports": {"type": "boolean", "default": false},
+      "catalogue": {"$ref": "#/$defs/catalogueFile"},
+      "record-id": {"$ref": "#/$defs/text"},
+      "records": {"type": "array", "maxItems": 2000}
+    },
+    "additionalProperties": false,
+    "oneOf": [
+      {"required": ["as-of", "records"], "not": {"required": ["catalogue"]}},
+      {"required": ["catalogue"], "not": {"anyOf": [{"required": ["as-of"]}, {"required": ["records"]}]}}
+    ],
+    "if": {"required": ["services"], "properties": {"services": {"const": true}}},
+    "then": {"properties": {"records": {"items": {"$ref": "#/$defs/recordWithServices"}}}},
+    "else": {"properties": {"records": {"items": {"$ref": "#/$defs/recordWithoutServices"}}}}
+  },
+  "$defs": {
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8192,
+      "pattern": "^(?=[^\\u0000-\\u001f\\u007f]*\\S)[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+    },
+    "identifier": {
+      "allOf": [
+        {"$ref": "#/$defs/text"},
+        {"pattern": "^[A-Za-z][A-Za-z0-9+.-]*:[^\\s]+(?![\\s\\S])"}
+      ]
+    },
+    "anchor": {"type": "string", "maxLength": 128, "pattern": "^[A-Za-z][A-Za-z0-9_-]*(?![\\s\\S])"},
+    "catalogueFile": {
+      "allOf": [
+        {"$ref": "#/$defs/text"},
+        {"pattern": "^(?!/)(?!.*//)[A-Za-z0-9_./-]+\\.json(?![\\s\\S])"}
+      ],
+      "description": "Explicit relative local JSON catalogue path, exclusive with inline as-of and records. Dot/parent components can follow the containing input/configuration directory; runtime normalization must keep the effective path within its document/project root. This schema cannot establish confinement, symlink safety or file/content validity."
+    },
+    "destination": {
+      "allOf": [
+        {"$ref": "#/$defs/text"},
+        {"pattern": "^(?!/)(?!.*//)(?!\\.{1,2}/)(?!.*?/\\.{1,2}/)[A-Za-z0-9_./-]+\\.html(?:#[A-Za-z0-9_-]+)?(?![\\s\\S])"}
+      ],
+      "description": "Relative ASCII .html destination, optionally with a nonempty simple anchor. No protocol, query, encoded path, backslash or dot traversal. The release audit checks existence and anchors separately."
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^(?:[0-9]{4}(?:-[0-9]{2}(?:-[0-9]{2})?)?|Present|Unknown)(?![\\s\\S])"
+    },
+    "decisionDate": {"type": "string", "pattern": "^[0-9]{4}(?:-[0-9]{2}(?:-[0-9]{2})?)?(?![\\s\\S])"},
+    "texts": {"type": "array", "maxItems": 2000, "items": {"$ref": "#/$defs/text"}},
+    "qualification": {
+      "type": "object",
+      "required": ["origin", "review", "verification", "evidence-availability"],
+      "properties": {
+        "origin": {"enum": ["author-declared", "extracted-candidate", "inferred-proposal"]},
+        "review": {"enum": ["unreviewed", "author-reviewed", "independently-reviewed"]},
+        "verification": {"enum": ["unassessed", "self-reported", "externally-verified"]},
+        "evidence-availability": {"enum": ["public", "restricted", "unavailable", "awaiting-permission"]},
+        "reviewer": {"$ref": "#/$defs/text"},
+        "reviewed-at": {"$ref": "#/$defs/decisionDate"},
+        "verifier": {"$ref": "#/$defs/text"},
+        "verified-at": {"$ref": "#/$defs/decisionDate"},
+        "method": {"$ref": "#/$defs/text"},
+        "scope": {"$ref": "#/$defs/text"},
+        "source-verification": {"$ref": "#/$defs/text"},
+        "source-status": {"$ref": "#/$defs/text"},
+        "source-scope": {"$ref": "#/$defs/text"},
+        "rights": {"$ref": "#/$defs/text"},
+        "contribution": {"$ref": "#/$defs/text"},
+        "causal-attribution": {"$ref": "#/$defs/text"}
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {"properties": {"verification": {"const": "externally-verified"}}},
+          "then": {"required": ["verifier", "verified-at", "method", "scope"]}
+        },
+        {
+          "if": {"properties": {"review": {"const": "independently-reviewed"}}},
+          "then": {"required": ["reviewer"]}
+        }
+      ]
+    },
+    "relation": {
+      "type": "object",
+      "required": ["predicate", "target"],
+      "properties": {
+        "predicate": {"allOf": [{"$ref": "#/$defs/text"}, {"maxLength": 80}]},
+        "target": {"$ref": "#/$defs/text"}
+      },
+      "additionalProperties": false
+    },
+    "fact": {
+      "type": "object",
+      "required": ["label", "value"],
+      "properties": {"label": {"$ref": "#/$defs/text"}, "value": {"$ref": "#/$defs/text"}},
+      "additionalProperties": false,
+      "description": "Exact public literal strings, not Markdown. A producer null or uncertain structure can be retained in a deliberately authored literal string such as null, not an omitted field or inferred value."
+    },
+    "public": {
+      "type": "object",
+      "required": ["title", "summary", "url", "qualification"],
+      "properties": {
+        "title": {"$ref": "#/$defs/text"},
+        "summary": {"$ref": "#/$defs/text"},
+        "url": {"$ref": "#/$defs/destination"},
+        "anchor": {"$ref": "#/$defs/anchor"},
+        "qualification": {"$ref": "#/$defs/qualification"},
+        "start": {"$ref": "#/$defs/date"},
+        "end": {"$ref": "#/$defs/date"},
+        "date": {"$ref": "#/$defs/date"},
+        "name": {"$ref": "#/$defs/text"},
+        "company": {"$ref": "#/$defs/text"},
+        "organization": {"$ref": "#/$defs/text"},
+        "grade": {"$ref": "#/$defs/text"},
+        "description": {"$ref": "#/$defs/text"},
+        "cv": {"$ref": "#/$defs/text"},
+        "hours": {"$ref": "#/$defs/text"},
+        "cpdHours": {"$ref": "#/$defs/text"},
+        "scope": {"$ref": "#/$defs/text"},
+        "contact": {"$ref": "#/$defs/text"},
+        "audience": {"$ref": "#/$defs/text"},
+        "availability": {"$ref": "#/$defs/text"},
+        "aliases": {"$ref": "#/$defs/texts"},
+        "categories": {"$ref": "#/$defs/texts"},
+        "assertions": {"$ref": "#/$defs/texts"},
+        "relations": {"type": "array", "maxItems": 2000, "items": {"$ref": "#/$defs/relation"}},
+        "facts": {"type": "array", "maxItems": 256, "items": {"$ref": "#/$defs/fact"}}
+      },
+      "additionalProperties": false
+    },
+    "publication": {
+      "type": "object",
+      "required": ["audience", "review", "rights"],
+      "properties": {
+        "audience": {"const": "public"},
+        "review": {"enum": ["author-reviewed", "independently-reviewed"]},
+        "rights": {"$ref": "#/$defs/text"},
+        "consent": {"$ref": "#/$defs/text"},
+        "reviewer": {"$ref": "#/$defs/text"},
+        "reviewed-at": {"$ref": "#/$defs/decisionDate"}
+      },
+      "additionalProperties": false,
+      "if": {"properties": {"review": {"const": "independently-reviewed"}}},
+      "then": {"required": ["reviewer"]}
+    },
+    "recordBase": {
+      "type": "object",
+      "required": ["id", "type", "publication"],
+      "properties": {
+        "id": {"$ref": "#/$defs/identifier"},
+        "type": {"enum": ["Person", "Role", "Project", "Skill", "Activity", "Output", "Outcome", "Impact", "PersonalReflection", "Evidence", "Time", "Assertion", "ServiceOffering", "EvidenceSource", "Relation"]},
+        "publication": {
+          "type": "object",
+          "required": ["audience"],
+          "properties": {"audience": {"enum": ["public", "private", "excluded"]}, "review": {}, "rights": {}, "consent": {}, "reviewer": {}, "reviewed-at": {}},
+          "additionalProperties": false
+        },
+        "public": {},
+        "private": {}
+      },
+      "additionalProperties": false
+    },
+    "selectedPublicRecord": {
+      "required": ["public"],
+      "properties": {"publication": {"$ref": "#/$defs/publication"}, "public": {"$ref": "#/$defs/public"}},
+      "allOf": [
+        {"if": {"properties": {"type": {"const": "Person"}}}, "then": {"properties": {"publication": {"required": ["consent"]}}}},
+        {"if": {"properties": {"type": {"const": "ServiceOffering"}}}, "then": {"properties": {"public": {"required": ["scope", "contact", "audience", "availability"]}}}},
+        {"if": {"properties": {"type": {"enum": ["Outcome", "Impact"]}}}, "then": {"properties": {"public": {"required": ["assertions"], "properties": {"assertions": {"minItems": 1}}}}}},
+        {
+          "if": {"properties": {"type": {"const": "Assertion"}}},
+          "then": {"properties": {"public": {"required": ["relations"], "properties": {"relations": {"contains": {"properties": {"predicate": {"enum": ["supportedByEvidence", "contradictedByEvidence", "qualifiedByEvidence"]}}, "required": ["predicate"]}}}}}}
+        }
+      ]
+    },
+    "recordWithServices": {
+      "allOf": [
+        {"$ref": "#/$defs/recordBase"},
+        {"if": {"properties": {"publication": {"properties": {"audience": {"const": "public"}}}}}, "then": {"$ref": "#/$defs/selectedPublicRecord"}}
+      ]
+    },
+    "recordWithoutServices": {
+      "allOf": [
+        {"$ref": "#/$defs/recordBase"},
+        {"if": {"properties": {"publication": {"properties": {"audience": {"const": "public"}}}, "type": {"not": {"const": "ServiceOffering"}}}}, "then": {"$ref": "#/$defs/selectedPublicRecord"}}
+      ]
+    }
+  }
+}

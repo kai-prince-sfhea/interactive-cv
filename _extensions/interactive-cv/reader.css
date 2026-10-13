@@ -1,0 +1,72 @@
+.cv-controls {
+  border: 1px solid currentColor;
+  border-radius: 0.35rem;
+  margin-block: 1.25rem;
+  padding: 1rem;
+}
+
+.cv-filter-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.75rem;
+}
+
+.cv-filter-label {
+  display: flex;
+  flex: 1 1 12rem;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.cv-filter-label input,
+.cv-filter-label select,
+.cv-reset {
+  background: Canvas;
+  box-sizing: border-box;
+  border: 1px solid currentColor;
+  border-radius: 0.2rem;
+  color: CanvasText;
+  font: inherit;
+  min-height: 2.75rem;
+  padding: 0.5rem;
+}
+
+.cv-filter-label input,
+.cv-filter-label select {
+  width: 100%;
+}
+
+.cv-controls :focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 3px;
+}
+
+.cv-filter-note,
+.cv-result-count {
+  margin-block: 0.75rem 0;
+}
+
+.cv-entry.cv-filtered-out {
+  display: none;
+}
+
+.cv-export-preview { font: inherit; margin-block-start: .75rem; padding: .5rem; }
+.cv-export-dialog { max-width: min(55rem, 90vw); max-height: 85vh; overflow: auto; }
+.cv-export-dialog::backdrop { background: rgb(0 0 0 / 55%); }
+.cv-export-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+.cv-export-actions button { font: inherit; min-height: 2.75rem; padding: .5rem; }
+.cv-export-dialog dt { font-weight: 700; }
+.cv-export-dialog dd { overflow-wrap: anywhere; }
+
+@media print {
+  .cv-controls {
+    display: none !important;
+  }
+  .cv-export-dialog { display: none !important; }
+
+  .cv-entry.cv-filtered-out {
+    display: block !important;
+  }
+}

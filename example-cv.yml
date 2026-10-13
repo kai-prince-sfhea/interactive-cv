@@ -1,0 +1,301 @@
+# Fictional example only; all approval/consent labels are illustrative.
+interactive-cv:
+  as-of: "2026-10-13"
+  services: false
+  records:
+    -
+      id: "urn:synthetic:cv:person"
+      type: "Person"
+      publication:
+        audience: "public"
+        review: "author-reviewed"
+        rights: "CC0 synthetic fixture"
+        consent: "Synthetic fixture; no real person represented"
+      public:
+        title: "Synthetic consenting person"
+        summary: "Approved synthetic Person wording for native output."
+        url: "example.html#cv-37b77b1c67cd"
+        qualification:
+          origin: "author-declared"
+          review: "author-reviewed"
+          verification: "self-reported"
+          evidence-availability: "public"
+        name: "Synthetic Example"
+    -
+      id: "urn:synthetic:cv:role"
+      type: "Role"
+      publication:
+        audience: "public"
+        review: "author-reviewed"
+        rights: "CC0 synthetic fixture"
+      public:
+        title: "Synthetic professional role"
+        summary: "Approved synthetic Role wording for native output."
+        url: "example.html#cv-8258769ac0ba"
+        qualification:
+          origin: "author-declared"
+          review: "author-reviewed"
+          verification: "self-reported"
+          evidence-availability: "public"
+        organization: "Synthetic organisation"
+        company: "Synthetic company"
+        start: "2024-01"
+        end: "2025-12"
+        grade: "Synthetic grade"
+        categories:
+          - "work"
+        description: "Synthetic listing description"
+        cv: "Approved synthetic CV description"
+        relations:
+          -
+            predicate: "heldBy"
+            target: "urn:synthetic:cv:person"
+    -
+      id: "urn:synthetic:cv:project"
+      type: "Project"
+      publication:
+        audience: "public"
+        review: "author-reviewed"
+        rights: "CC0 synthetic fixture"
+      public:
+        title: "Synthetic accessibility project"
+        summary: "Approved synthetic Project wording for native output."
+        url: "example.html#cv-ac52af50b0e1"
+        qualification:
+          origin: "author-declared"
+          review: "author-reviewed"
+          verification: "self-reported"
+          evidence-availability: "public"
+        categories:
+          - "education"
+        relations:
+          -
+            predicate: "withinRole"
+            target: "urn:synthetic:cv:role"
+    -
+      id: "urn:synthetic:cv:design"
+      type: "Skill"
+      publication:
+        audience: "public"
+        review: "author-reviewed"
+        rights: "CC0 synthetic fixture"
+      public:
+        title: "Web Design"
+        summary: "Approved synthetic Skill wording for native output."
+        url: "example.html#cv-6ae5ecf73fc9"
+        qualification:
+          origin: "author-declared"
+          review: "author-reviewed"
+          verification: "self-reported"
+          evidence-availability: "public"
+        aliases:
+          - "website design"
+    -
+      id: "urn:synthetic:cv:accessibility"
+      type: "Skill"
+      publication:
+        audience: "public"
+        review: "author-reviewed"
+        rights: "CC0 synthetic fixture"
+      public:
+        title: "Accessibility"
+        summary: "Approved synthetic Skill wording for native output."
+        url: "example.html#cv-abf77b2c1df9"
+        qualification:
+          origin: "author-declared"
+          review: "author-reviewed"
+          verification: "self-reported"
+          evidence-availability: "public"
+        aliases:
+          - "inclusive access"
+    -
+      id: "urn:synthetic:cv:web-accessibility"
+      type: "Skill"
+      publication:
+        audience: "public"
+        review: "author-reviewed"
+        rights: "CC0 synthetic fixture"
+      public:
+        title: "Web Accessibility"
+        summary: "Approved synthetic Skill wording for native output."
+        url: "example.html#cv-239d07b78138"
+        qualification:
+          origin: "author-declared"
+          review: "author-reviewed"
+          verification: "self-reported"
+          evidence-availability: "public"
+        aliases:
+          - "accessible web"
+        relations:
+          -
+            predicate: "broader"
+            target: "urn:synthetic:cv:design"
+          -
+            predicate: "broader"
+            target: "urn:synthetic:cv:accessibility"
+    -
+      id: "urn:synthetic:cv:activity"
+      type: "Activity"
+      publication:
+        audience: "public"
+        review: "author-reviewed"
+        rights: "CC0 synthetic fixture"
+      public:
+        title: "Synthetic design activity"
+        summary: "Approved synthetic Activity wording for native output."
+        url: "example.html#cv-bae1d27f0599"
+        qualification:
+          origin: "author-declared"
+          review: "author-reviewed"
+          verification: "self-reported"
+          evidence-availability: "public"
+        hours: "3"
+        cpdHours: "3"
+        relations:
+          -
+            predicate: "usesSkill"
+            target: "urn:synthetic:cv:web-accessibility"
+          -
+            predicate: "withinProject"
+            target: "urn:synthetic:cv:project"
+    -
+      id: "urn:synthetic:cv:output"
+      type: "Output"
+      publication:
+        audience: "public"
+        review: "author-reviewed"
+        rights: "CC0 synthetic fixture"
+      public:
+        title: "Synthetic public deliverable"
+        summary: "Approved synthetic Output wording for native output."
+        url: "example.html#cv-556d7b128fa8"
+        qualification:
+          origin: "author-declared"
+          review: "author-reviewed"
+          verification: "self-reported"
+          evidence-availability: "public"
+        relations:
+          -
+            predicate: "producedBy"
+            target: "urn:synthetic:cv:activity"
+    -
+      id: "urn:synthetic:cv:outcome"
+      type: "Outcome"
+      publication:
+        audience: "public"
+        review: "author-reviewed"
+        rights: "CC0 synthetic fixture"
+      public:
+        title: "Synthetic observed outcome"
+        summary: "Approved synthetic Outcome wording for native output."
+        url: "example.html#cv-0adbe33666fa"
+        qualification:
+          origin: "author-declared"
+          review: "author-reviewed"
+          verification: "self-reported"
+          evidence-availability: "public"
+        assertions:
+          - "urn:synthetic:cv:assertion"
+        relations:
+          -
+            predicate: "followsOutput"
+            target: "urn:synthetic:cv:output"
+    -
+      id: "urn:synthetic:cv:impact"
+      type: "Impact"
+      publication:
+        audience: "public"
+        review: "author-reviewed"
+        rights: "CC0 synthetic fixture"
+      public:
+        title: "Synthetic scoped impact claim"
+        summary: "Approved synthetic Impact wording for native output."
+        url: "example.html#cv-cbba46684c8e"
+        qualification:
+          origin: "author-declared"
+          review: "author-reviewed"
+          verification: "self-reported"
+          evidence-availability: "public"
+        assertions:
+          - "urn:synthetic:cv:assertion"
+        relations:
+          -
+            predicate: "contributedBy"
+            target: "urn:synthetic:cv:outcome"
+    -
+      id: "urn:synthetic:cv:reflection"
+      type: "PersonalReflection"
+      publication:
+        audience: "public"
+        review: "author-reviewed"
+        rights: "CC0 synthetic fixture"
+      public:
+        title: "Synthetic public reflection"
+        summary: "Approved synthetic PersonalReflection wording for native output."
+        url: "example.html#cv-ff27a0f0a272"
+        qualification:
+          origin: "author-declared"
+          review: "author-reviewed"
+          verification: "self-reported"
+          evidence-availability: "public"
+        relations:
+          -
+            predicate: "reflectsOn"
+            target: "urn:synthetic:cv:activity"
+    -
+      id: "urn:synthetic:cv:evidence"
+      type: "Evidence"
+      publication:
+        audience: "public"
+        review: "author-reviewed"
+        rights: "CC0 synthetic fixture"
+      public:
+        title: "Synthetic public evidence"
+        summary: "Approved synthetic Evidence wording for native output."
+        url: "example.html#cv-7d396a7e26aa"
+        qualification:
+          origin: "author-declared"
+          review: "author-reviewed"
+          verification: "self-reported"
+          evidence-availability: "public"
+        relations:
+          -
+            predicate: "documents"
+            target: "urn:synthetic:cv:output"
+    -
+      id: "urn:synthetic:cv:time"
+      type: "Time"
+      publication:
+        audience: "public"
+        review: "author-reviewed"
+        rights: "CC0 synthetic fixture"
+      public:
+        title: "Synthetic partial date"
+        summary: "Approved synthetic Time wording for native output."
+        url: "example.html#cv-fb6961006a42"
+        qualification:
+          origin: "author-declared"
+          review: "author-reviewed"
+          verification: "self-reported"
+          evidence-availability: "public"
+        date: "2025-06"
+    -
+      id: "urn:synthetic:cv:assertion"
+      type: "Assertion"
+      publication:
+        audience: "public"
+        review: "author-reviewed"
+        rights: "CC0 synthetic fixture"
+      public:
+        title: "Synthetic evidence-qualified assertion"
+        summary: "Synthetic author-declared observation; causal attribution is uncertain."
+        url: "example.html#cv-c99f1b42f97c"
+        qualification:
+          origin: "author-declared"
+          review: "author-reviewed"
+          verification: "self-reported"
+          evidence-availability: "public"
+        relations:
+          -
+            predicate: "supportedByEvidence"
+            target: "urn:synthetic:cv:evidence"
