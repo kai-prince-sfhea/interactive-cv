@@ -21,7 +21,7 @@ local function text(v, field, optional)
   return s
 end
 local function keys(v, allowed, field)
-  for k in pairs(v) do if not allowed[k] then fail(field .. ' has unknown field ' .. tostring(k)) end end
+  for k in pairs(v) do if not allowed[k] then fail(field .. ' has unknown field; remove unsupported keys and use the documented field allowlist') end end
 end
 local function set(t) local r={} for _,s in ipairs(t) do r[s]=true end return r end
 local function choice(v, values, field)
@@ -183,10 +183,10 @@ local function process(doc)
   local function doc_link(url) return root_prefix..url end
   local records,byid={},{}
   local allids={}
-  for _,input in ipairs(list(o.records,'records')) do
+  for input_index,input in ipairs(list(o.records,'records')) do
     input=map(input,'record'); keys(input,set({'id','type','publication','public','private'}),'record')
     local id=text(input.id,'record.id'); if not id:match('^[%a][%w+.-]*:%S+$') then fail('record.id requires a stable URI/URN with a nonempty suffix') end
-    if allids[id] then fail('duplicate record.id '..id) end; allids[id]=true
+    if allids[id] then fail('record occurrence ' .. input_index .. '.id is duplicated; assign a unique stable URI/URN') end; allids[id]=true
     local kind=choice(input.type,types,'record.type')
     local pub=map(input.publication,'publication')
     keys(pub,set({'audience','review','rights','consent','reviewer','reviewed-at'}),'publication')
@@ -226,10 +226,10 @@ local function process(doc)
       records[#records+1]=r; byid[id]=r
     end
   end
-  for _,r in ipairs(records) do
+  for record_index,r in ipairs(records) do
     local evidence=false
-    for _,rel in ipairs(r.relations) do
-      local target=byid[rel.target]; if not target then fail('relation references unavailable/non-public record from '..r.id) end
+    for relation_index,rel in ipairs(r.relations) do
+      local target=byid[rel.target]; if not target then fail('public record occurrence ' .. record_index .. '.relations[' .. relation_index .. '] references an unavailable/non-public record; select an admitted public target') end
       if rel.predicate=='broader' and (r.type~='Skill' or target.type~='Skill') then fail('broader requires Skill endpoints') end
       if rel.predicate=='supportedByEvidence' or rel.predicate=='contradictedByEvidence' or rel.predicate=='qualifiedByEvidence' then
         if target.type~='Evidence' then fail('evidence relation requires Evidence target') end; evidence=true
@@ -368,7 +368,7 @@ local function process(doc)
   -- Native DOCX/EPUB/other writers keep the same Pandoc text and links.
   -- html:js also contains revealjs/email; only plain HTML is enhanced here.
   if used and FORMAT=='html' and quarto.doc.is_format('html:js') then
-    quarto.doc.add_html_dependency({name='interactive-cv',version='0.0.3',scripts=exports and {'export.js','reader.js'} or {'reader.js'},stylesheets={'reader.css'}})
+    quarto.doc.add_html_dependency({name='interactive-cv',version='0.0.4',scripts=exports and {'export.js','reader.js'} or {'reader.js'},stylesheets={'reader.css'}})
   end
   -- Public data is rendered deliberately; exclude author metadata from writer
   -- templates. This is not a boundary for other filters or referenced resources.

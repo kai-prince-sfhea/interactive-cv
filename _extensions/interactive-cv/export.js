@@ -10,7 +10,7 @@
   function fail(message) { throw new Error("interactive-cv export: " + message); }
   function keys(value, allowed, field) {
     if (!value || typeof value !== "object" || Array.isArray(value)) fail(field + " must be an object");
-    for (const key of Object.keys(value)) if (!allowed.has(key)) fail(field + " has unknown field " + key);
+    for (const key of Object.keys(value)) if (!allowed.has(key)) fail(field + " has unknown field; remove unsupported keys and use the documented field allowlist");
   }
   function text(value, field) {
     if (typeof value !== "string" || !value.trim() || value.length > 8192 || /[\u0000-\u0008\u000b\u000c\u000e-\u001f\ufffe\uffff]/u.test(value)) fail(field + " must be bounded nonblank XML-safe text");
@@ -48,10 +48,12 @@
     if (/^[a-z][a-z0-9+.-]*:/iu.test(url) && !/^https?:\/\//iu.test(url)) fail("export links require HTTP(S) or relative public destinations");
     if (url.startsWith("//")) fail("protocol-relative export link is not allowed");
     if (baseUrl) {
-      const base = new URL(baseUrl);
+      let base;
+      try { base = new URL(baseUrl); } catch (_) { fail("baseUrl requires a valid public HTTP(S) URL"); }
       // Browser filter/query state is not part of an author's public URL.
       base.search = ""; base.hash = "";
-      const result = new URL(url, base);
+      let result;
+      try { result = new URL(url, base); } catch (_) { fail("url requires a valid public destination"); }
       if (result.protocol !== "https:" && result.protocol !== "http:") fail("export links require an HTTP(S) base URL");
       if (result.username || result.password) fail("export links cannot include credentials");
       return result.href;

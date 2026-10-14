@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:quarto:interactive-cv:config:v1",
   "title": "Interactive CV authoring configuration v1",
-  "description": "Structural reference for the value of interactive-cv metadata in experimental runtime 0.0.3. This is not a schema for an entire Quarto document, producer interchange or browser export model.",
+  "description": "Structural reference for the value of interactive-cv metadata in experimental runtime 0.0.4. This is not a schema for an entire Quarto document, producer interchange or browser export model.",
   "$comment": "Copyright 2026 Kai Prince. SPDX-License-Identifier: Apache-2.0. No automatic Quarto editor integration is registered. Validate JSON-compatible values after author metadata selection. Runtime additionally checks UTF-8 byte limits, actual calendar dates, chronology, field conflicts, unique IDs and anchors, reference closure and endpoint types, skill cycles/depth, page title binding and whole-model bounds. This schema cannot establish consent, rights, truth, causal attribution, accessibility or release inventory completeness. Character limits here do not replace runtime byte limits. Explicit enabled:false and inactive service/private public maps are intentionally bypassed as in the runtime.",
   "type": "object",
   "if": {"required": ["enabled"], "properties": {"enabled": {"const": false}}},

@@ -2,7 +2,7 @@
 
 An experimental Quarto filter for an evidence-linked CV, using ordinary pages
 and one authoritative YAML or literal JSON catalogue. It works without models or a graph
-database. **0.0.3 is experimental source**, with a deterministic CV core,
+database. **0.0.4 is experimental source**, with a deterministic CV core,
 public interchange import, selected document previews and a whole-output audit.
 Source publication is separate from a supported release, real-data use or deployment.
 
@@ -67,7 +67,7 @@ Run lifecycle commands from the consuming project:
 
 ```powershell
 quarto list extensions
-quarto update kai-prince-sfhea/interactive-cv --no-prompt
+quarto update extension kai-prince-sfhea/interactive-cv --no-prompt
 ```
 
 Temporarily disable the filter at the effective document/project metadata layer:
@@ -115,7 +115,9 @@ when composing profiles. The extension does not reparse
 | `exports` | Boolean, `false` | Add selected Word/print-PDF controls to an HTML index |
 | `record-id` | Stable URI/URN text, absent by default | Bind a detail page to one record; check its title |
 
-Unknown active options are refused. `catalogue` cannot be combined with inline
+Unknown active options are refused without echoing their supplied names. Import
+prevalidation reports structural field/array positions instead of arbitrary
+nested keys or sidecar record IDs; these positions are not source line numbers. `catalogue` cannot be combined with inline
 `as-of`/`records`; `services` and `exports` stay in document/project options,
 outside the data-only JSON file. Quarto supplies the Lua/Pandoc runtimes. Node.js
 20+ is an additional prerequisite only for the explicit importer/auditor commands;
@@ -124,6 +126,8 @@ Python, browser-test tooling and developer packages are not consumer prerequisit
 Use ordinary `quarto render` and `quarto preview`; there is no additional author
 build command. After changing a literal JSON catalogue, explicitly render again.
 Catalogue-only filesystem watching is not established by the preview check.
+
+Quarto `--quiet` can suppress diagnostic text while retaining a nonzero failure status. Re-run with `--log-level error` to see the extension's safe contract message; ordinary render logs remain author material.
 
 ## Authoritative records
 
@@ -351,6 +355,8 @@ does not mean a whole page is free of accessibility issues.
 | Other outputs/platforms | Slides, email, custom formats/output-file relocation, native PDF engines, EPUB readers and other OS/browser/Quarto versions need separate checks |
 | Execution | Native render suites run serially; concurrent render/deployment coordination is not provided |
 
+Version 0.0.4 changes diagnostic messages without changing catalogue, import or
+export data contracts; no migration is required from 0.0.3.
 Version 0.x contracts remain experimental. Preserve authoritative source inputs
 and stable IDs before updating. Review the changelog, compare rebuilt public
 wording/statuses/destinations and rerun the whole-output audit, especially after
@@ -400,7 +406,7 @@ original importer, auditor, reader and OOXML exporter retain the installed
 licence/notices. CV content and evidence require their own rights
 and consent decisions; Apache licensing does not make them open data or OER.
 
-Use the repository's issue tracker once available for reproducible, non-sensitive
+Use [GitHub Issues](https://github.com/kai-prince-sfhea/interactive-cv/issues) for reproducible, non-sensitive
 bugs, preferably with a small synthetic example and version information. Do not
 post credentials, confidential career/evidence data or unmitigated vulnerability
 details in public issues. No dedicated confidential reporting channel is

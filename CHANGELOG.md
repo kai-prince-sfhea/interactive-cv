@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.0.4 — diagnostic privacy follow-up — 14 October 2026
+
+- Refuse unsupported metadata/import/export fields without echoing their supplied
+  names or duplicate/relation record IDs. Import prevalidation uses structural
+  positions instead of arbitrary nested keys or consent-sidecar record IDs in
+  error messages; filesystem and malformed export-URL errors use safe remedies.
+- Preserve catalogue content, explicit permissions, source status, field bounds
+  and document exports; no catalogue/interchange migration is required.
+- Use the published issue link and consistent owner-qualified update command.
+
 ### 0.0.3 public-source preparation
 
 Portable local setup/lifecycle instructions, explicit option/support/migration

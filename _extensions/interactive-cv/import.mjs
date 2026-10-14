@@ -30,7 +30,7 @@ function object(value, name) {
 }
 function keys(value, allowed, name, required = []) {
   object(value, name);
-  for (const key of Object.keys(value)) if (!allowed.includes(key)) fail(`${name} has unknown field ${key}`);
+  for (const key of Object.keys(value)) if (!allowed.includes(key)) fail(`${name} has unknown field; remove unsupported keys and use the documented field allowlist`);
   for (const key of required) if (!own(value, key)) fail(`${name} requires ${key}`);
 }
 function text(value, name, max = MAX_TEXT) {
@@ -67,21 +67,23 @@ function destination(value, name) {
   if (!/^[A-Za-z0-9_./-]+\.html(?:#[A-Za-z0-9_-]+)?$/u.test(value) || value.startsWith('/') || value.split('/').some((part) => !part || part === '.' || part === '..')) fail(`${name} requires a safe relative static .html destination`);
   return value;
 }
-function bound(value, name, depth = 0, count = { value: 0 }) {
+function bound(value, name, depth = 0, count = { value: 0 }, maxFields = 100) {
   if (depth > 24 || ++count.value > 150000) fail(`${name} exceeds structural limits`);
   if (typeof value === 'string') {
     if (Buffer.byteLength(value) > MAX_TEXT || /[\u0000\u0008\u000b\u000c\u007f]/u.test(value)) fail(`${name} has excessive text or control characters`);
     if (/(?:\bfile:\/|\b[A-Za-z]:[\\/]|\\\\[^\\\s]+\\)/u.test(value)) fail(`${name} contains a local file reference`);
   } else if (Array.isArray(value)) {
     array(value, name);
-    for (const entry of value) bound(entry, name, depth + 1, count);
+    for (const [index, entry] of value.entries()) bound(entry, `${name}[${index}]`, depth + 1, count);
   } else if (value && typeof value === 'object') {
     object(value, name);
-    const maxFields = ['decisions.destinations', 'decisions.persons'].includes(name) ? MAX_RECORDS : 100;
     if (Object.keys(value).length > maxFields) fail(`${name} has excessive object fields`);
-    for (const [key, entry] of Object.entries(value)) {
+    for (const [index, [key, entry]] of Object.entries(value).entries()) {
       if (['__proto__', 'prototype', 'constructor'].includes(key)) fail(`${name} has an unsafe key`);
-      bound(entry, `${name}.${key}`, depth + 1, count);
+      // Arbitrary source keys and sidecar record IDs can be private. Positions
+      // locate this structural traversal without putting their text in errors.
+      const childLimit=depth===0 && name==='decisions' && ['destinations','persons'].includes(key) ? MAX_RECORDS : 100;
+      bound(entry, `${name}.field[${index}]`, depth + 1, count, childLimit);
     }
   } else if (value !== null && typeof value !== 'boolean' && (typeof value !== 'number' || !Number.isFinite(value))) fail(`${name} is not JSON data`);
 }
@@ -275,5 +277,13 @@ async function cli(args) {
   process.stdout.write(`Wrote ${output['interactive-cv'].records.length} public records. Validate static destinations in the rendered site before publication.\n`);
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-  cli(process.argv.slice(2)).catch((error) => { process.stderr.write(`${error.message}\n`); process.exitCode = 1; });
+  cli(process.argv.slice(2)).catch((error) => {
+    // Native filesystem errors can contain private source/decision paths.
+    // Preserve our bounded contract diagnostics, not arbitrary exception text.
+    const message=typeof error?.message==='string' && error.message.startsWith('interactive-cv import: ')
+      ? error.message : error?.code==='EEXIST'
+        ? 'interactive-cv import: output already exists (EEXIST); choose a new output file'
+        : 'interactive-cv import: input/output operation failed; check that input and decisions are readable local files and the new output directory is writable';
+    process.stderr.write(`${message}\n`); process.exitCode = 1;
+  });
 }
