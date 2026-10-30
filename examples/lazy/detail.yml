@@ -1,0 +1,7 @@
+{
+  "interactive-cv": {
+    "graph-file": "career.json",
+    "exports": true,
+    "record-id": "urn:synthetic:cv:activity"
+  }
+}

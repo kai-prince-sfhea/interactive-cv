@@ -1,11 +1,13 @@
 ---
 title: "Synthetic evidence-linked CV"
+lang: en
 filters:
   - kai-prince-sfhea/interactive-cv
 metadata-files:
   - example-cv.yml
 format:
-  html: default
+  html:
+    toc: true
   docx: default
 ---
 
@@ -15,5 +17,135 @@ claims and review decisions below are illustrative. It is not Kai's CV.
 Read the complete record list, follow its evidence links, or use the optional
 HTML filters. Word output contains the same static records and relationships.
 
+## 1. Render your first CV
+
+Keep this page and `example-cv.yml` in the same folder. The YAML front matter
+above already selects the filter and loads that catalogue. After installing
+the extension as described in the README, use your editor's **Render** command
+or run:
+
+```powershell
+quarto render example.qmd --to html
+```
+
+Open `example.html`. Below, you should find the fictional public catalogue,
+its stated source qualifications and controls for filtering the same records.
+The complete static records remain readable without JavaScript. Normal Quarto
+Preview is sufficient for this standalone example; no `.mjs` file or custom
+server is required.
+
+## 2. Explore the result
+
+Try a type filter, follow a record's relationships and return to the complete
+list. The Skill records include a skill with more than one parent. An Outcome
+or Impact links to an explicit Assertion and its evidence; nearby graph nodes
+do not independently prove a career claim. Services are off in this example.
+
+Open **Project, evidence and date filters** if you want a second step. Choose a
+date relation and **Apply compound filters**. True, false and unknown results
+refer to the stated public records, not independently verified employment or
+ability. Project-context selection is optional and becomes available with
+Generative Websites; date and evidence queries work standalone. **Clear advanced
+filters** returns to the literal index.
+
+Date relations include strict before/after and inclusive within-window queries.
+When an Output explicitly links to an Activity, the collapsed date-ordering
+inspection retains unknown results and checks only declared dates; it does not
+prove that an activity caused an output.
+
+The empty block below is the one live placeholder in this tutorial. The filter
+fills it from the YAML catalogue during rendering. Keep your introduction and
+other narrative outside the placeholder.
+
 ::: {.cv-index}
 :::
+
+## 3. Make a small edit and render again
+
+In this QMD file, add a sentence to the introduction above. Render again with
+the same command. Your sentence should appear above the same CV catalogue:
+ordinary QMD controls the surrounding narrative, while `example-cv.yml` owns
+the record data.
+
+Next, open `example-cv.yml` and find the fictional record with
+`id: "urn:synthetic:cv:project"`. Change only its `public.summary`, keeping its
+identifier and destination intact, then render again. The generated Project
+summary should show your new wording. For real records, review the changed
+wording, evidence rights and publication decisions before publishing it; the
+fictional approval labels here are illustrative.
+
+For a date example, find the Role's `end: "2025-12"` in the same YAML file and
+change only that value to `end: "Unknown"`. Render again. The native record
+should retain **Unknown**, and a stated-day query must not turn it into a current
+appointment. Keep dates quoted and preserve the exact qualification. You can
+restore the original value after trying this change.
+
+## 4. Adapt the catalogue to your own pages
+
+Use a single authoritative catalogue and keep its complete `interactive-cv`
+mapping together. A record contains its stable identifier, type, publication
+decision and selected public wording. Quote dates. Person records need an
+explicit consent declaration; consultancy ServiceOffering records also require
+an explicit author decision to enable services. Nothing infers those decisions
+from the record's presence in a file.
+
+You can choose a readable `public.anchor`, such as `teaching`, and a matching
+`public.url`, such as `example.html#teaching`, instead of calculating a hash.
+Keep the anchor unique and update the URL if the rendered page is renamed.
+The README's **Authoritative records** section lists supported fields and
+relationship rules.
+
+## 5. Choose your next step
+
+For Word output, run:
+
+```powershell
+quarto render example.qmd --to docx
+```
+
+The Word document contains the same static public records and relationships.
+For a website that publishes both formats together, use `quarto render --to all`
+so an HTML-only rebuild does not clean an earlier Word file.
+
+When compatible Knowledge Graph Extraction is installed and activated alongside
+this extension, this index also supplies a separate **Interactive CV** graph
+automatically. Its navigator and searchable textual alternative reuse the same
+eligible public records. No second relationship catalogue or graph database is
+needed. Without that companion, the CV remains a readable, filterable index.
+
+Open the repository source `README.md` in your editor for the advanced reference:
+graph IDs/placement/search, single JSON imports, uncertain date ranges, explicitly
+approved consultancy services, reviewed language pages and selected browser
+exports. With Generative Websites installed, the advanced `reports` option can
+group the same public records into daily/weekly reports, keeping undated evidence
+and reflections as supporting context without a second author catalogue.
+Rendering this page does not create a separate rendered README page.
+Read the synthetic records as demonstrations, then replace them through your own
+review process. No author-written JavaScript or model is required.
+
+## Optional progressive source project
+
+Open the source folder `examples/lazy` in the editor for the ordinary project-based lazy-detail exercise. Its index.qmd explains Render Project and optional companion setup. This is a source-folder link, not a promise that standalone rendering copied another rendered guide page.
+
+## Optional professional draft with a page model
+
+After the deterministic tutorial, open the README's **Professional source tools**
+recipe. Add a declared professional extract to the existing catalogue, with
+`proposal: true`, and keep all its context and evidence. With compatible
+Generative Websites and Local AI Websites activated, a configured `.local-ai`
+panel on this same page can lend its already-ready language model.
+
+First choose **Prepare unchanged public wording**, then **Check this page's
+language-model controls**. Choose a provider explicitly. **Review language model
+setup** focuses its original setup control. Review, consent and load in that
+panel; check controls again, then choose **Draft an unreviewed proposal with the
+ready model**. The full unchanged extract stays beside the candidate.
+
+Keep record destinations relative to the project root for portable Preview and
+deployed use. The source tools display the current delivered root and the
+declared canonical root separately, while preserving the original records.
+
+Without a configured ready model, use the extract and manual candidate validation.
+Large selections remain unavailable for drafting when complete evidence does not
+fit; no qualification is silently removed. The README introduces the advanced
+setup and bounds. No model or custom script is needed for the basic tutorial.

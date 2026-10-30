@@ -1,0 +1,6 @@
+{
+  "interactive-cv": {
+    "graph-file": "career.json",
+    "exports": true
+  }
+}

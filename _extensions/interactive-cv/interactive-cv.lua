@@ -1,5 +1,11 @@
 -- Copyright 2026 Kai Prince. SPDX-License-Identifier: Apache-2.0
--- Explicit public records become ordinary Pandoc blocks; no inference or IO.
+-- Explicit public records become ordinary Pandoc blocks; no inference.
+-- Capture Quarto's documented filter path before callbacks change context.
+-- Relative native paths avoid the host's Latin-1 relative-require conversion.
+local runtime=pandoc.path.directory(PANDOC_SCRIPT_FILE)
+if not pandoc.path.is_absolute(runtime) then runtime=pandoc.path.normalize(pandoc.path.join({pandoc.system.get_working_directory(),runtime})) end
+local graph=dofile(pandoc.path.join({runtime,'graph.lua'}))
+local r6=dofile(pandoc.path.join({runtime,'r6-native.lua'}))
 local function fail(s) assert(false, 'interactive-cv: ' .. s) end
 local function map(v, field)
   if v == nil then return {} end
@@ -41,7 +47,7 @@ local function destination(v)
   return s
 end
 local types=set({'Person','Role','Project','Skill','Activity','Output','Outcome','Impact','PersonalReflection','Evidence','Time','Assertion','ServiceOffering','EvidenceSource','Relation'})
-local public_fields=set({'title','summary','url','qualification','start','end','date','name','company','organization','grade','description','cv','hours','cpdHours','scope','contact','audience','availability','aliases','categories','assertions','relations','facts','anchor'})
+local public_fields=set({'title','summary','url','qualification','start','end','date','temporal','service','name','company','organization','grade','description','cv','hours','cpdHours','scope','contact','audience','availability','aliases','categories','assertions','relations','facts','anchor'})
 local scalar_fields={'start','end','date','name','company','organization','grade','description','cv','hours','cpdHours','scope','contact','audience','availability'}
 local qualifier_fields={'origin','review','verification','evidence-availability','reviewer','reviewed-at','verifier','verified-at','method','scope','source-verification','source-status','source-scope','rights','contribution','causal-attribution'}
 local qualifiers=set(qualifier_fields)
@@ -96,7 +102,60 @@ local function project_depth()
   end
   return depth
 end
-local function literal_catalogue(value)
+local function metadata_plain(value,depth)
+  depth=(depth or 0)+1;if depth>32 then fail('selected feature data exceeds 32 levels') end
+  local kind=pandoc.utils.type(value)
+  if type(value)=='boolean' or type(value)=='number' or type(value)=='string' then return value end
+  if kind=='List' or kind=='MetaList' then local out=pandoc.List();for _,v in ipairs(value) do out:insert(metadata_plain(v,depth)) end;return out end
+  if kind=='Inlines' or kind=='MetaInlines' or kind=='MetaString' then return pandoc.utils.stringify(value) end
+  if type(value)=='table' then local out={};for k,v in pairs(value) do if type(k)~='string' then fail('selected feature mapping requires text keys') end;out[k]=metadata_plain(v,depth) end;return out end
+  fail('selected feature data requires literal QMD/YAML values')
+end
+local function safe_json(value)
+  return pandoc.json.encode(value):gsub('<','\\u003c'):gsub('>','\\u003e'):gsub('&','\\u0026'):gsub(utf8.char(0x2028),'\\u2028'):gsub(utf8.char(0x2029),'\\u2029')
+end
+local function html_attribute(value)
+  return text(value,'public HTML attribute'):gsub('&','&amp;'):gsub('"','&quot;'):gsub('<','&lt;'):gsub('>','&gt;')
+end
+local function native_features(doc,model,records,options)
+  local input=quarto.doc.input_file
+  if not pandoc.path.is_absolute(input) then input=pandoc.path.join({pandoc.system.get_working_directory(),input}) end
+  input=pandoc.path.normalize(input)
+  local root=graph.project_root()
+  local request={version=1,model=model,authoring={temporal=pandoc.List(),services=pandoc.List()},consentingPersonIds=pandoc.List(),
+    root=pandoc.path.normalize(root),inputDir=pandoc.path.directory(input),pageURL=graph.default_destination(),language=doc.meta.lang and text(doc.meta.lang,'lang') or 'en'}
+  for _,record in ipairs(records) do
+    if record.temporal then local definition={id=record.id};for k,v in pairs(record.temporal) do definition[k]=v end;request.authoring.temporal:insert(definition) end
+    if record.service then local definition={id=record.id};for k,v in pairs(record.service) do definition[k]=v end;request.authoring.services:insert(definition) end
+    if record.type=='Person' then request.consentingPersonIds:insert(record.id) end
+  end
+  if options.reports~=nil then request.reports=metadata_plain(options.reports) end
+  request.r6=r6.request(options,metadata_plain,fail,FORMAT=='html');request.htmlOutput=FORMAT=='html'
+  if FORMAT=='html' then request.outputRoot=graph.project_output_root() end
+  if options['language-pages']~=nil then
+    request.languagePages=metadata_plain(options['language-pages'])
+    if type(request.languagePages)=='table' and request.languagePages.version=='1' then request.languagePages.version=1 end
+    request.pageRevision=text(options['page-revision'],'page-revision')
+  elseif options['page-revision']~=nil then request.pageRevision=text(options['page-revision'],'page-revision') end
+  local website=doc.meta.website
+  local site_url=quarto.metadata.get('website.site-url')
+  if site_url~=nil then request.siteURL=text(site_url,'website.site-url')
+  elseif type(website)=='table' and website['site-url']~=nil then request.siteURL=text(website['site-url'],'website.site-url') end
+  local ok,response=pcall(pandoc.pipe,os.getenv('QUARTO_BIN') or 'quarto',{'run',pandoc.path.join({runtime,'compile.ts'})},pandoc.json.encode(request))
+  if not ok then fail('cannot prepare the selected public CV features; check the installed reference and exact source/review declarations') end
+  local compiled;ok,compiled=pcall(pandoc.json.decode,response)
+  if not ok or type(compiled)~='table' or compiled.version~=1 or type(compiled.model)~='table' or compiled.model.version~=1 or type(compiled.model.records)~='table' or #compiled.model.records~=#records then fail('invalid installed CV feature response') end
+  for i,m in ipairs(compiled.model.records) do
+    if type(m)~='table' or m.id~=records[i].id or type(m.facts)~='table' then fail('installed CV feature response does not match the public source') end
+    records[i].facts=pandoc.List()
+    for _,f in ipairs(m.facts) do
+      if type(f)~='table' then fail('invalid installed CV feature fact') end
+      records[i].facts:insert({label=text(f.label,'feature fact.label'),value=text(f.value,'feature fact.value')})
+    end
+  end
+  return compiled
+end
+local function literal_catalogue(value,graph_input)
   local name=text(value,'catalogue')
   if not name:match('^[A-Za-z0-9_./%-]+%.json$') or name:sub(1,1)=='/' then fail('catalogue requires a relative local .json file') end
   if name:find('//',1,true) then fail('catalogue contains an empty path component') end
@@ -150,28 +209,34 @@ local function literal_catalogue(value)
     else local _,e=raw:find('^[^%s,%]%}]+',pos);if not e then fail('catalogue value scan failed') end;pos=e+1 end
   end
   scan()
+  if graph_input then return graph.import(data),pandoc.utils.sha1(raw) end
   data=map(data,'catalogue envelope');keys(data,set({'interactive-cv'}),'catalogue envelope')
   if data['interactive-cv']==nil then fail('catalogue requires an interactive-cv envelope') end
   local catalogue=map(data['interactive-cv'],'catalogue value');keys(catalogue,set({'as-of','records'}),'catalogue value')
-  return catalogue
+  return catalogue,pandoc.utils.sha1(raw)
 end
 local function process(doc)
   local raw=doc.meta['interactive-cv']
   if raw==nil then
     doc:walk({Div=function(el)
-      if el.classes:includes('cv-index') or el.classes:includes('cv-record') then fail('CV placeholder requires interactive-cv metadata; load the authoritative catalogue') end
+      if el.classes:includes('cv-index') or el.classes:includes('cv-record') or el.classes:includes('cv-graph') then fail('CV placeholder requires interactive-cv metadata; load the authoritative catalogue') end
     end})
     return doc
   end
   local o=map(raw,'configuration')
   if not boolean(o.enabled,true,'enabled') then return doc end
-  keys(o,set({'enabled','as-of','services','records','record-id','exports','catalogue'}),'configuration')
-  if o.catalogue~=nil then
-    if o.records~=nil or o['as-of']~=nil then fail('catalogue conflicts with inline records/as-of; use one authoritative source') end
-    local c=literal_catalogue(o.catalogue);local resolved={}
+  keys(o,set({'enabled','as-of','services','records','record-id','exports','catalogue','graph','graph-file','language-pages','page-revision','reports','delivery','temporal-rules','claim-validity','professional-narratives'}),'configuration')
+  if o.catalogue~=nil and o['graph-file']~=nil then fail('choose catalogue or graph-file, not both') end
+  local catalogue_digest
+  if o.catalogue~=nil or o['graph-file']~=nil then
+    if o.records~=nil or o['as-of']~=nil then fail('catalogue/graph-file conflicts with inline records/as-of; use one authoritative source') end
+    local c,observed_digest=literal_catalogue(o.catalogue or o['graph-file'],o['graph-file']~=nil);local resolved={}
+    catalogue_digest=observed_digest
     for k,v in pairs(o) do resolved[k]=v end
     resolved.records=c.records;resolved['as-of']=c['as-of'];o=resolved
+    if c.graph and o.graph==nil then o.graph=c.graph end
   end
+  local graph_options=graph.options(o.graph)
   if o.records==nil then fail('records requires an explicitly declared sequence (empty is permitted); keep the complete metadata-file namespace together or use catalogue instead of partial overrides') end
   local asof=date(o['as-of'],'as-of')
   if not asof or not asof:match('^%d%d%d%d%-%d%d%-%d%d$') then fail('as-of requires a complete ISO day') end
@@ -214,6 +279,18 @@ local function process(doc)
       end
       for _,k in ipairs(scalar_fields) do r[k]=text(p[k],'public.'..k,true) end
       r.start=date(p.start,'public.start'); r['end']=date(p['end'],'public.end'); r.date=date(p.date,'public.date')
+      if p.temporal~=nil then
+        r.temporal=metadata_plain(map(p.temporal,'public.temporal'))
+        keys(r.temporal,set({'start','end','date'}),'public.temporal')
+        if next(r.temporal)==nil then fail('public.temporal requires at least one endpoint or date') end
+        for _,k in ipairs({'start','end','date'}) do
+          if r[k] and r.temporal[k]~=nil and r.temporal[k]~=r[k] then fail('typed temporal endpoint conflicts with its legacy date; keep one authoritative value') end
+        end
+      end
+      if p.service~=nil then
+        if kind~='ServiceOffering' then fail('public.service requires a ServiceOffering record') end
+        r.service=metadata_plain(map(p.service,'public.service'))
+      end
       if r.start and r['end'] and #r.start==#r['end'] and r.start:match('^%d') and r['end']:match('^%d') and r.start>r['end'] then fail('end precedes start') end
       if r.hours and r.cpdHours and r.hours~=r.cpdHours then fail('hours and cpdHours conflict; choose one authoritative value') end
       r.aliases=strings(p.aliases,'aliases'); r.categories=strings(p.categories,'categories'); r.assertions=strings(p.assertions,'assertions'); r.relations={}
@@ -273,7 +350,7 @@ local function process(doc)
   end
   for _,r in ipairs(records) do if r.type=='Skill' then ancestors(r.id) end end
   local function link(id) local t=byid[id]; return pandoc.Link({plain(t.title)},doc_link(t.url)) end
-  local function entry(r)
+  local function entry(r,compact)
     local b={pandoc.Header(2,{plain(r.title)},pandoc.Attr('',{'cv-record-title'})),field('Type',r.type),para(r.summary)}
     local q=r.qualification
     for _,k in ipairs(qualifier_fields) do if q[k] then b[#b+1]=field(k,q[k]) end end
@@ -281,6 +358,7 @@ local function process(doc)
     -- Permission provenance may be sensitive. Only the reviewed status enum and
     -- a fixed consent marker are public; exact decisions stay author-side.
     if r.type=='Person' then b[#b+1]=para('Consent declaration recorded by the author; not independently verified.') end
+    if not compact then
     for _,k in ipairs(scalar_fields) do if r[k] then b[#b+1]=field(k,r[k]) end end
     for _,f in ipairs(r.facts) do b[#b+1]=field(f.label,f.value) end
     if #r.aliases>0 then b[#b+1]=field('Aliases',table.concat(r.aliases,', ')) end
@@ -294,6 +372,7 @@ local function process(doc)
       backlinks[#backlinks+1]={pandoc.Plain({plain('Referenced by '..rel.predicate..' from '),link(rel.source)})}
     end
     if #backlinks>0 then b[#b+1]=pandoc.BulletList(backlinks) end
+    end
     b[#b+1]=pandoc.Para({pandoc.Link({plain('Static destination')},doc_link(r.url))})
     local skills={}
     if r.type=='Skill' then for id in pairs(ancestry[r.id]) do skills[id]=true end end
@@ -305,7 +384,7 @@ local function process(doc)
     for id in pairs(skills) do ids[#ids+1]=id end
     table.sort(ids)
     for _,id in ipairs(ids) do search[#search+1]=byid[id].title; search[#search+1]=table.concat(byid[id].aliases,' ') end
-    return pandoc.Div(b,pandoc.Attr(r.anchor,{'cv-entry'},{['data-cv-id']=r.id,['data-cv-type']=r.type,['data-cv-search']=table.concat(search,' '),['data-cv-skills']=table.concat(ids,' '),['data-cv-groups']=table.concat(r.categories,' ')}))
+    return pandoc.Div(b,pandoc.Attr(r.anchor,{'cv-entry'},{['data-cv-id']=r.id,['data-cv-type']=r.type,['data-cv-search']=compact and '' or table.concat(search,' '),['data-cv-skills']=table.concat(ids,' '),['data-cv-groups']=table.concat(r.categories,' ')}))
   end
   -- One projected model is shared by optional reader exports and explicit
   -- author-side final-output auditing. Never serialize raw author metadata.
@@ -324,22 +403,48 @@ local function process(doc)
     if #m.relations>2000 then fail('relations plus assertions exceeds the 2000-link projected limit') end
     public_model.records:insert(m)
   end
+  local feature_needed,index_requested=false,false
+  doc:walk({Div=function(el)
+    if el.classes:includes('cv-index') then index_requested=true end
+    if el.classes:includes('cv-index') or el.classes:includes('cv-record') or el.classes:includes('cv-graph') then feature_needed=true end
+  end})
+  local feature_options=o
+  if not index_requested then
+    -- Inherited index publication/report settings do not bind a detail URL or
+    -- invoke an unused companion. Mandatory temporal/service facts still run.
+    feature_options={};for key,value in pairs(o) do if key~='reports' and key~='language-pages' and key~='delivery' and key~='temporal-rules' and key~='professional-narratives' then feature_options[key]=value end end
+  end
+  local compiled=feature_needed and native_features(doc,public_model,records,feature_options) or {version=1,model=public_model}
+  public_model=compiled.model
   local encoded=pandoc.json.encode(public_model)
   if #encoded>2097152 then fail('projected public catalogue exceeds the 2 MiB page-model limit; split the author-reviewed scope') end
-  local safe_encoded=encoded:gsub('<','\\u003c'):gsub('>','\\u003e'):gsub('&','\\u0026'):gsub(utf8.char(0x2028),'\\u2028'):gsub(utf8.char(0x2029),'\\u2029')
+  local safe_encoded=safe_json(public_model)
   if #safe_encoded>2097152 then fail('escaped public catalogue exceeds the 2 MiB delivered model limit; split the author-reviewed scope') end
   local bound=text(o['record-id'],'record-id',true)
   if bound then
     if not byid[bound] then fail('record-id refers to unavailable/non-public record') end
     if doc.meta.title and pandoc.utils.stringify(doc.meta.title)~=byid[bound].title then fail('page title conflicts with authoritative record title') end
   end
-  local used,seen=false,{}
+  local used,index_used,seen,rendered_records=false,false,{},{}
+  local graph_placeholders,index_placeholders=0,0
+  doc:walk({Div=function(el)
+    if el.classes:includes('cv-index') then index_placeholders=index_placeholders+1 end
+    if el.classes:includes('cv-graph') then
+      graph_placeholders=graph_placeholders+1
+      if #el.content>0 then fail('cv-graph must be empty; write its heading or explanation outside the placeholder') end
+    end
+  end})
+  if graph_placeholders>1 then fail('use exactly one cv-graph placeholder') end
+  if graph_options and graph_options.navigation and graph_options.placement=='placeholder' and (index_placeholders>0 or graph_placeholders>0) then
+    if graph_placeholders~=1 or index_placeholders~=1 then fail('graph.placement placeholder requires exactly one empty cv-graph and one cv-index on this page') end
+  elseif graph_placeholders>0 then fail('cv-graph requires graph.navigation true and graph.placement placeholder') end
   local function authored_id(el)
     if el.identifier and el.identifier~='' then seen[el.identifier]=true end
   end
   doc:walk({Header=authored_id,Div=authored_id,Span=authored_id,CodeBlock=authored_id,Table=authored_id,Figure=authored_id,Image=authored_id})
   doc=doc:walk({Div=function(el)
     if el.classes:includes('cv-index') then
+      index_used=true
       if #el.content>0 then fail('cv-index must be empty; write surrounding context outside the placeholder') end
       local b={para('Public CV snapshot as of '..asof..'. Complete declared public catalogue; services '..(services and 'enabled' or 'off')..'. Missing end dates do not mean current appointments.')}
       local rows={}
@@ -347,14 +452,32 @@ local function process(doc)
       if #rows>0 then b[#b+1]=pandoc.BulletList(rows) else b[#b+1]=para('No public records selected in this declared catalogue.') end
       for _,r in ipairs(records) do
         if seen[r.anchor] then fail('duplicate rendered record anchor; use one index or distinct detail records per page') end
-        seen[r.anchor]=true; b[#b+1]=entry(r)
+        seen[r.anchor]=true; rendered_records[r.id]=true; b[#b+1]=entry(r,FORMAT=='html' and compiled.r6 and type(compiled.r6.delivery)=='table')
       end
       if FORMAT=='html' and quarto.doc.is_format('html:js') then
+        if compiled.r6 then local data=safe_json(compiled.r6);if #data>4194304 then fail('prepared CV additions exceed 4 MiB') end;b[#b+1]=pandoc.RawBlock('html','<script type="application/json" class="cv-r6-data">'..data..'</script>') end
+        if compiled.r6 and type(compiled.r6.delivery)=='table' then el.attributes['data-cv-lazy']='true' else
         b[#b+1]=pandoc.RawBlock('html','<script type="application/json" class="interactive-cv-model">'..safe_encoded..'</script>')
+        end
+        if type(compiled.featureData)~='table' then fail('installed CV feature data is unavailable') end
+        local feature_data=safe_json(compiled.featureData);if #feature_data>4194304 then fail('CV feature data exceeds 4 MiB; split the author-reviewed scope') end
+        b[#b+1]=pandoc.RawBlock('html','<script type="application/json" class="cv-feature-data">'..feature_data..'</script>')
+        local identity=compiled.languageIdentity
+        if type(identity)=='table' and type(identity.modelSha256)=='string' and type(identity.semanticSha256)=='string' then
+          for _,digest in ipairs({identity.modelSha256,identity.semanticSha256}) do if #digest~=64 or digest:find('[^a-f0-9]') then fail('invalid installed CV source fingerprint') end end
+          b[#b+1]=pandoc.RawBlock('html','<details class="cv-source-review"><summary>Source/review fingerprints for authors</summary>')
+          b[#b+1]=para('These fingerprints bind the complete declared public model and its conservative shared facts. They do not establish consent, truth or translation fidelity.')
+          b[#b+1]=pandoc.Para({plain('Public model: '),pandoc.Code('sha256:'..identity.modelSha256)})
+          b[#b+1]=pandoc.Para({plain('Shared facts: '),pandoc.Code('sha256:'..identity.semanticSha256)})
+          b[#b+1]=pandoc.RawBlock('html','</details>')
+        end
         el.attributes['data-cv-exports']=exports and 'true' or 'false'
         el.attributes['data-cv-root']=root_prefix=='' and './' or root_prefix
       end
       used=true; el.content=b; return el
+    elseif el.classes:includes('cv-graph') then
+      el.content={para('Graph navigation is available in the HTML page when Knowledge Graph Extraction is active. The public record list and its relationships remain available in this document.')}
+      return el
     elseif el.classes:includes('cv-record') then
       local id=el.attributes['record-id'] or bound
       if not id or not byid[id] then fail('cv-record requires a public record-id') end
@@ -362,13 +485,115 @@ local function process(doc)
       local r=byid[id]
       if el.attributes.title and el.attributes.title~=r.title then fail('detail title conflicts with authoritative record title') end
       if seen[r.anchor] then fail('duplicate rendered record anchor') end
-      seen[r.anchor]=true; el.content={entry(r)}; return el
+      seen[r.anchor]=true; rendered_records[r.id]=true; el.content={entry(r)}; return el
     end
   end})
+  if used and type(compiled.languageLinks)=='table' and type(compiled.languageLinks.links)=='table' then
+    local links=pandoc.List()
+    for _,alternative in ipairs(compiled.languageLinks.links) do
+      if type(alternative)~='table' then fail('invalid installed CV language link') end
+      links:insert(pandoc.Plain({pandoc.Link({plain(text(alternative.language,'language link.language'))},text(alternative.href,'language link.href'))}))
+    end
+    doc.blocks:insert(pandoc.Div({pandoc.Header(2,{plain('Reviewed language pages')}),pandoc.BulletList(links),para('Language and source-review declarations retain exact stated facts. Matching identifiers or facts do not establish translation fidelity.')},pandoc.Attr('',{'cv-language-pages'})))
+    if FORMAT=='html' then
+      local head=pandoc.List()
+      for _,alternative in ipairs(compiled.languageLinks.links) do
+        head:insert(pandoc.MetaBlocks({pandoc.RawBlock('html','<link rel="alternate" hreflang="'..html_attribute(alternative.language)..'" href="'..html_attribute(alternative.href)..'">')}))
+      end
+      if compiled.languageLinks.canonical~=nil then head:insert(pandoc.MetaBlocks({pandoc.RawBlock('html','<link rel="canonical" href="'..html_attribute(compiled.languageLinks.canonical)..'">')})) end
+      local previous=doc.meta['header-includes']
+      if previous~=nil then
+        local kind=pandoc.utils.type(previous)
+        if kind=='List' or kind=='MetaList' then for _,entry in ipairs(previous) do head:insert(entry) end else head:insert(previous) end
+      end
+      doc.meta['header-includes']=pandoc.MetaList(head)
+    end
+  end
+  if index_used and FORMAT=='html' and type(compiled.jsonld)=='table' then
+    local jsonld=safe_json(compiled.jsonld)
+    if #jsonld>2097152 then fail('selected service structured data exceeds 2 MiB') end
+    doc.blocks:insert(pandoc.RawBlock('html','<script type="application/ld+json" class="cv-service-jsonld">'..jsonld..'</script>'))
+  end
+  if index_used and services and type(compiled.servicePublication)=='table' and type(compiled.servicePublication.evaluatedOn)=='string' then
+    doc.blocks:insert(para('Service availability was evaluated for publication on '..text(compiled.servicePublication.evaluatedOn,'service publication day')..'; the public CV snapshot remains as of '..asof..'. Unknown or expired validity does not establish a current offer.'))
+  end
+  if index_used then local extra=r6.static(compiled.r6,pandoc,link,fail);if extra then doc.blocks:insert(extra) end end
+  if index_used and type(compiled.activityOutputOrdering)=='table' and type(compiled.activityOutputOrdering.results)=='table' and #compiled.activityOutputOrdering.results>0 then
+    local audit=compiled.activityOutputOrdering
+    local blocks={pandoc.Header(2,{plain('Declared activity/output date ordering')}),para(text(audit.qualification,'ordering qualification')),field('Coverage',text(audit.status,'ordering status'))}
+    for _,row in ipairs(audit.results) do
+      if not byid[row.outputId] or not byid[row.activityId] then fail('invalid installed activity/output receipt') end
+      blocks[#blocks+1]=pandoc.Para({link(row.outputId),plain(' — producedBy — '),link(row.activityId),plain(': '..text(row.value,'ordering value')..' ('..text(row.basis,'ordering basis')..')')})
+      for _,reason in ipairs(row.reasons or {}) do blocks[#blocks+1]=field('Reason',text(reason,'ordering reason')) end
+    end
+    if FORMAT=='html' then table.insert(blocks,1,pandoc.RawBlock('html','<details class="cv-activity-output-ordering"><summary>Inspect declared activity/output date ordering</summary>'));blocks[#blocks+1]=pandoc.RawBlock('html','</details>') end
+    doc.blocks:insert(pandoc.Div(blocks,pandoc.Attr('',{'cv-activity-output-ordering-section'})))
+  end
+  if index_used and type(compiled.reportBundle)=='table' and type(compiled.reportBundle.reports)=='table' then
+    local bundle=compiled.reportBundle
+    local blocks={pandoc.Header(2,{plain('Public CV period reports')}),para(text(bundle.qualification,'report qualification'))}
+    local function report_record(wrapper)
+      local r=wrapper.record;if type(r)~='table' or not byid[r.id] then fail('invalid installed report source record') end
+      local rows={pandoc.Header(4,{pandoc.Link({plain(text(r.title,'report title'))},doc_link(r.url))}),para(text(r.summary,'report summary')),field('Type',r.type),pandoc.Para({plain('Source ID: '),pandoc.Code(r.id)}),field('Publication review',r.publicationReview)}
+      for _,name in ipairs(qualifier_fields) do if r.qualification[name] then rows[#rows+1]=field(name,r.qualification[name]) end end
+      for _,name in ipairs({'start','end','date'}) do if type(r[name])=='string' then rows[#rows+1]=field(name,r[name]) end end
+      for _,fact in ipairs(r.scalarFacts or {}) do rows[#rows+1]=field(fact.label,fact.value) end
+      for _,fact in ipairs(r.facts or {}) do rows[#rows+1]=field(fact.label,fact.value) end
+      for _,relation in ipairs(r.relations or {}) do rows[#rows+1]=pandoc.Para({plain(relation.predicate..': '),pandoc.Link({plain(relation.title)},doc_link(relation.url))}) end
+      rows[#rows+1]=pandoc.Para({plain('Published record SHA-256: '),pandoc.Code(text(wrapper.recordSha256,'report record hash'))})
+      return pandoc.Div(rows,pandoc.Attr('',{'cv-period-source-record'}))
+    end
+    for _,report in ipairs(bundle.reports) do
+      local rows={pandoc.Header(3,{plain(text(report.title,'report title'))}),para(text(report.notice,'report notice')),field('Report review',report.status),pandoc.Para({plain('Complete CV/report source digest: '),pandoc.Code(text(report.sourceDigest,'report digest'))}),pandoc.Para({plain('Provider grouping source digest: '),pandoc.Code(text(report.providerSourceDigest,'provider report digest'))})}
+      if type(report.review)=='table' then rows[#rows+1]=field('Declared reviewer',text(report.review.reviewer,'report reviewer'));rows[#rows+1]=field('Declared review date',text(report.review.date,'report review date')) end
+      rows[#rows+1]=pandoc.Header(4,{plain('Events with exact declared dates in this period')})
+      if #report.nativeRows==0 then rows[#rows+1]=para('No eligible exact event dates were declared in this period.') end
+      for _,wrapper in ipairs(report.nativeRows) do rows[#rows+1]=report_record(wrapper) end
+      if #report.contextRecords>0 then
+        rows[#rows+1]=pandoc.Header(4,{plain('Supporting context — not events assigned to this period')})
+        rows[#rows+1]=para('These records retain their own declared dates or lack of dates. They preserve project/role context, assertions and supporting, contrary or qualifying evidence; no event date has been invented.')
+        for _,wrapper in ipairs(report.contextRecords) do rows[#rows+1]=report_record(wrapper) end
+      end
+      blocks[#blocks+1]=pandoc.Div(rows,pandoc.Attr(text(report.id,'report id'),{'cv-period-report'},{['data-cv-period']=report.period,['data-cv-period-start']=report.start}))
+    end
+    if #bundle.omissions>0 then
+      blocks[#blocks+1]=pandoc.Header(3,{plain('Records omitted from dated event grouping')})
+      local omissions={};for _,omission in ipairs(bundle.omissions) do
+        if not byid[omission.id] then fail('invalid installed report omission') end
+        omissions[#omissions+1]={pandoc.Plain({link(omission.id),plain(': '..text(omission.code,'report omission code'))})}
+      end
+      blocks[#blocks+1]=pandoc.BulletList(omissions)
+    end
+    doc.blocks:insert(pandoc.Div(blocks,pandoc.Attr('',{'cv-period-reports'})))
+  end
   -- Native DOCX/EPUB/other writers keep the same Pandoc text and links.
   -- html:js also contains revealjs/email; only plain HTML is enhanced here.
   if used and FORMAT=='html' and quarto.doc.is_format('html:js') then
-    quarto.doc.add_html_dependency({name='interactive-cv',version='0.0.4',scripts=exports and {'export.js','reader.js'} or {'reader.js'},stylesheets={'reader.css'}})
+    quarto.doc.add_html_dependency({name='interactive-cv',version='0.0.10',scripts=exports and {'export.js','features-browser.js','reader.js','r6-reader.js'} or {'features-browser.js','reader.js','r6-reader.js'},stylesheets={'reader.css'}})
+  end
+  if FORMAT=='html' and next(rendered_records)~=nil then
+    -- Detail-only pages contribute their observed records without index assets.
+    -- Only records actually rendered by CV placeholders become observations.
+    -- The publication model above has already excluded permissions/private maps.
+    local producer_model={records=pandoc.List(),asOf=asof,language=doc.meta.lang and text(doc.meta.lang,'lang') or 'en'}
+    for i,m in ipairs(public_model.records) do
+      if rendered_records[m.id] then
+        local copy={};for k,v in pairs(m) do copy[k]=v end
+        copy.anchor=records[i].anchor;copy.aliases=records[i].aliases
+        for _,k in ipairs({'start','end','date'}) do
+          local exact=records[i][k] or (records[i].temporal and records[i].temporal[k])
+          if type(exact)=='string' then copy[k]=exact end
+        end
+        producer_model.records:insert(copy)
+      end
+    end
+    local deps={};if o.catalogue or o['graph-file'] then deps[1]=text(o.catalogue or o['graph-file'],'catalogue') end
+    if graph.publish(producer_model,graph_options,deps,doc.meta,catalogue_digest) and graph_options.navigation and index_used then
+      local navigator=pandoc.RawBlock('html','<div data-kg-graph="'..graph_options.id..'" data-kg-producer-placeholder="1"></div>')
+      if graph_options.placement=='placeholder' then
+        doc=doc:walk({Div=function(el) if el.classes:includes('cv-graph') then return navigator end end})
+      else doc.blocks:insert(navigator) end
+    end
   end
   -- Public data is rendered deliberately; exclude author metadata from writer
   -- templates. This is not a boundary for other filters or referenced resources.

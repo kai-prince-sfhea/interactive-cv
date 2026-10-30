@@ -1,0 +1,30 @@
+---
+{
+  "title": "Fictional public CV",
+  "metadata-files": [
+    "lazy.yml"
+  ],
+  "local-ai": {
+    "graphs": false
+  }
+}
+---
+
+This source project uses fictional records only. It tests the local experimental candidate and selects the unqualified `interactive-cv` filter supplied by a local-path installation.
+
+## Try the three-page project
+
+1. Copy this entire source folder to a normal project directory. Keep `career.json`, `lazy.yml`, `full.yml` and `detail.yml` beside the three QMD pages.
+2. From that directory, install the local candidate with `quarto add "C:/path/to/interactive-cv" --no-prompt`. Replace the path with your actual local extension source. This tested local install matches the unqualified selector in `_quarto.yml`; an owner-qualified GitHub installation requires its matching selector and may install an earlier public version.
+3. Use **Render Project** and Preview this page. Search public CV before loading any details, load one record, then load the complete catalogue before using advanced filters or exports.
+
+[Full native record details](full.html) remain readable without JavaScript. [One native activity page](detail.html) shows the single-record form. All record destinations in this fictional catalogue point to the rendered full page.
+
+The Word format uses the complete native source. A lazy browser print before full loading is a compact index; load the complete catalogue before using selected Word or PDF print preview.
+
+Optional professional extraction requires the separately installed original Generative Websites filter selected in the project. Optional quote-request validation additionally requires the original Local AI Websites filter and a normal panel. Without those companions, this three-page CV remains usable and reports that the optional provider is unavailable. No model starts and no author-written JavaScript is required.
+
+After changing permissions, **Render Project** and use the existing output audit before publication. A selected-page partial render does not update another page or its old managed resources.
+
+::: {.cv-index}
+:::

@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "graph": {"id": "cv", "label": "Fictional professional experience"},
+  "as-of": "2026-10-23",
+  "nodes": [
+    {
+      "id": "urn:example:cv:project",
+      "type": "Project",
+      "publication": {"audience": "public", "review": "author-reviewed", "rights": "CC0 fictional example"},
+      "public": {
+        "title": "Fictional accessible publishing project",
+        "summary": "An illustrative project, not a claim about a real person.",
+        "qualification": {"origin": "author-declared", "review": "author-reviewed", "verification": "unassessed", "evidence-availability": "unavailable"}
+      }
+    },
+    {
+      "id": "urn:example:cv:skill",
+      "type": "Skill",
+      "publication": {"audience": "public", "review": "author-reviewed", "rights": "CC0 fictional example"},
+      "public": {
+        "title": "Accessible web authoring",
+        "summary": "A fictional skill linked to the illustrative project.",
+        "qualification": {"origin": "author-declared", "review": "author-reviewed", "verification": "unassessed", "evidence-availability": "unavailable"}
+      }
+    }
+  ],
+  "edges": [{"from": "urn:example:cv:project", "predicate": "usesSkill", "to": "urn:example:cv:skill"}]
+}

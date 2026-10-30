@@ -1,0 +1,53 @@
+{
+  "interactive-cv": {
+    "graph-file": "career.json",
+    "exports": true,
+    "delivery": {
+      "mode": "lazy",
+      "bundle-bytes": 1024
+    },
+    "temporal-rules": [
+      {
+        "id": "activity-before-output",
+        "operation": "before",
+        "left": "urn:synthetic:cv:activity",
+        "right": "urn:synthetic:cv:output"
+      }
+    ],
+    "claim-validity": [
+      {
+        "id": "urn:synthetic:cv:assertion",
+        "from": "2026-01",
+        "through": "2026-12"
+      }
+    ],
+    "professional-narratives": [
+      {
+        "id": "short-extract",
+        "label": "Declared time wording",
+        "purpose": "cv-summary",
+        "selection": {
+          "types": [
+            "Time"
+          ],
+          "detail": "summary"
+        },
+        "question": "Retain the exact declared time wording and qualifiers.",
+        "proposal": true
+      },
+      {
+        "id": "evidence-extract",
+        "label": "Evidence-qualified contribution",
+        "purpose": "application-answer",
+        "selection": {
+          "types": [
+            "Outcome"
+          ],
+          "includeEvidence": false,
+          "detail": "summary"
+        },
+        "question": "Describe only declared contribution with its contrary and qualifying evidence."
+      }
+    ]
+  }
+}

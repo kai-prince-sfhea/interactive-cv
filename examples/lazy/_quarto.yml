@@ -1,0 +1,24 @@
+{
+  "project": {
+    "type": "website",
+    "output-dir": "_site",
+    "render": [
+      "index.qmd",
+      "full.qmd",
+      "detail.qmd"
+    ]
+  },
+  "website": {
+    "title": "Fictional R6 CV",
+    "site-url": "https://fictional.example.test/cv/"
+  },
+  "format": {
+    "html": {
+      "theme": "litera"
+    },
+    "docx": "default"
+  },
+  "filters": [
+    "interactive-cv"
+  ]
+}
