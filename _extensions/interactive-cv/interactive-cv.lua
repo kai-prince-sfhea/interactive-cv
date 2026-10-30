@@ -569,7 +569,7 @@ local function process(doc)
   -- Native DOCX/EPUB/other writers keep the same Pandoc text and links.
   -- html:js also contains revealjs/email; only plain HTML is enhanced here.
   if used and FORMAT=='html' and quarto.doc.is_format('html:js') then
-    quarto.doc.add_html_dependency({name='interactive-cv',version='0.0.10',scripts=exports and {'export.js','features-browser.js','reader.js','r6-reader.js'} or {'features-browser.js','reader.js','r6-reader.js'},stylesheets={'reader.css'}})
+    quarto.doc.add_html_dependency({name='interactive-cv',version='0.0.11',scripts=exports and {'export.js','features-browser.js','reader.js','r6-reader.js'} or {'features-browser.js','reader.js','r6-reader.js'},stylesheets={'reader.css'}})
   end
   if FORMAT=='html' and next(rendered_records)~=nil then
     -- Detail-only pages contribute their observed records without index assets.

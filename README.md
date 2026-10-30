@@ -2,13 +2,19 @@
 
 An experimental Quarto filter for an evidence-linked CV, using ordinary pages
 and one authoritative YAML or literal JSON catalogue. It works without models or a graph
-database. **0.0.10 is experimental development source**, adding explicit ready-model professional
+database. **0.0.11 is experimental development source**, retaining explicit ready-model professional
 proposal controls alongside source-bound date,
 evidence and service queries, optional professional views and reviewed native
 language-page mappings to the deterministic CV core and selected exports.
 Source publication is separate from a supported release, real-data use or deployment.
-The current follow-up keeps period-report headings fully opaque under native
-Quarto themes. Individual theme choices still need contrast and human review.
+The current follow-up places search and public records before optional tools,
+uses native disclosures for their inputs, and keeps cancellation and status
+available outside those disclosures. Controls follow paired native theme colours;
+selected document previews use readable black text on white paper. Lazy full
+loading retains filter choices and hands focus to the full reader only when it
+replaces the reader's current control or record. Failed detail delivery is
+announced while native summaries remain available. Individual theme choices
+still need contrast and human review.
 
 ## Install and try the example
 
@@ -426,6 +432,8 @@ usable. No AI inference, free-prose translation or automatic competency
 assessment is part of these controls.
 
 ### Compound selection, dates and evidence
+
+When a completed selection replaces a focused result, focus moves to the existing selection status. Input controls, Apply and a reader who moved elsewhere keep their current focus.
 
 Open **Project, evidence and date filters** to combine the basic literal/type/
 skill selection with declared evidence, a date/window or a consultancy status.
@@ -906,6 +914,14 @@ The QMD page remains an empty ordinary placeholder:
 ```
 
 Render Project as usual. The HTML page retains every public title, summary, qualifier and static destination, plus a complete compact discovery index. Basic literal/type/skill discovery includes linked and inherited Skill titles/aliases before detail transfer. A reader chooses **Load declared details** for an individual record or **Load complete public catalogue for advanced filters and exports**. Missing/bad bundles are unknown; they do not make discovery records disappear. Partial details are never accepted as a public v1 model. Full reassembly and the original complete-model hash must pass before existing compound/export APIs run.
+
+Search and public records precede the optional tools. Optional inputs use native
+disclosures, while cancellation, status and accepted output remain available
+outside them. Complete loading retains current query/type/skill filters. Focus
+passes to a full-reader control or the retained record only when that action
+replaces the current focused content; moving elsewhere during loading keeps
+focus there. Initial detail-delivery failure is announced through the same
+polite status while native summaries and ordinary destinations remain available.
 
 Native DOCX retains the full original source records. The existing selected Word download and structured browser print/PDF continue after full loading. This stage adds no direct PDF generator or PDF/UA guarantee. Without JavaScript, compact source summaries and ordinary native record destinations remain available; use an existing `.cv-record` page for complete native detail. A lazy print made before full loading is a compact index, not a complete CV export.
 

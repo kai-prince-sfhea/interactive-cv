@@ -137,14 +137,16 @@
     const status=makeElement(document,'p','cv-advanced-status','These filters use the complete declared public snapshot. Missing public information remains unknown.');status.setAttribute('role','status');
     const note=makeElement(document,'p','cv-provider-note'),output=makeElement(document,'div','cv-selection-reasons'),actions=makeElement(document,'div','cv-export-actions');
     const apply=makeElement(document,'button','cv-advanced-apply','Apply compound filters'),cancel=makeElement(document,'button','cv-advanced-cancel','Cancel optional selection'),reset=makeElement(document,'button','cv-advanced-reset','Clear advanced filters'),download=makeElement(document,'button','cv-selection-download','Download selection receipt');for(const button of [apply,cancel,reset,download])button.type='button';download.disabled=true;
-    actions.appendChild(apply);actions.appendChild(cancel);actions.appendChild(reset);actions.appendChild(download);details.appendChild(fields);details.appendChild(actions);details.appendChild(note);details.appendChild(status);details.appendChild(output);controls.appendChild(details);
+    actions.appendChild(apply);actions.appendChild(reset);actions.appendChild(download);details.appendChild(fields);details.appendChild(actions);details.appendChild(note);controls.appendChild(details);controls.appendChild(cancel);controls.appendChild(status);controls.appendChild(output);
     let selected=null,receipt=null;
+    // Capture ownership before removing old result nodes. Inputs and Apply stay untouched.
+    function replaceOwnedOutput(){let owns=false;for(let node=document.activeElement;node;node=node.parentElement){if(node===output){owns=true;break;}}output.replaceChildren();if(owns){status.setAttribute('tabindex','-1');status.focus();}}
     const provider=()=>{const value=view.QuartoGenerative||global.QuartoGenerative;return value?.protocolVersion===1&&typeof value.selectProfessionalView==='function'?value:null;};
     function providerReady(){project.disabled=!provider();note.textContent=provider()?'Generative Websites is connected for declared project/context selection. No AI or claim rewriting is used.':'Install Generative Websites alongside Interactive CV to enable project/context professional views. Evidence and date filters remain available.';}
     function active(){return !!(project.value||evidence.value||operation.value||service.value);}
     function state(){return{project:project.value,evidence:evidence.value,operation:operation.value,at:at.value,from:from.value,through:through.value,service:service.value,unknown:unknown.value};}
     function identity(input){return input.modelText===admittedModelText&&input.featureText===admittedFeatureText&&modelMarker.textContent===input.modelText&&marker.textContent===input.featureText&&JSON.stringify(state())===JSON.stringify(input.state)&&JSON.stringify(callbacks.basicRequest())===JSON.stringify(input.basicRequest)&&JSON.stringify(callbacks.basicIds())===JSON.stringify(input.basicIds)&&provider()===input.provider;}
-    function showUnknown(rows){output.replaceChildren();if(!rows.length)return;output.appendChild(makeElement(document,'p','','Unknown results are listed separately. They do not establish current appointments, absent evidence or unavailable services.'));const list=makeElement(document,'ul');for(const row of rows){const record=model.records.find(record=>record.id===row.id),li=makeElement(document,'li'),link=makeElement(document,'a','',record.title);link.href=new URL(record.url,new URL(index.dataset.cvRoot||'./',document.baseURI)).href;li.appendChild(link);li.appendChild(makeElement(document,'span','',' — '+row.reasons.map(reason=>reason.replaceAll('-',' ')).join('; ')));list.appendChild(li);}output.appendChild(list);}
+    function showUnknown(rows){replaceOwnedOutput();if(!rows.length)return;output.appendChild(makeElement(document,'p','','Unknown results are listed separately. They do not establish current appointments, absent evidence or unavailable services.'));const list=makeElement(document,'ul');for(const row of rows){const record=model.records.find(record=>record.id===row.id),li=makeElement(document,'li'),link=makeElement(document,'a','',record.title);link.href=new URL(record.url,new URL(index.dataset.cvRoot||'./',document.baseURI)).href;li.appendChild(link);li.appendChild(makeElement(document,'span','',' — '+row.reasons.map(reason=>reason.replaceAll('-',' ')).join('; ')));list.appendChild(li);}output.appendChild(list);}
     function showOrdering(audit){const inspection=makeElement(document,'details','cv-ordering-inspection');inspection.appendChild(makeElement(document,'summary','','Inspect declared activity and output date ordering'));const counts={true:0,false:0,unknown:0};for(const row of audit.results)counts[row.value]++;inspection.appendChild(makeElement(document,'p','',audit.status+': '+audit.coverage.assessedRelations+' of '+audit.coverage.relations+' explicit public output/activity associations assessed; '+counts.true+' date-consistent, '+counts.false+' date-inconsistent and '+counts.unknown+' unknown. '+audit.coverage.omittedRelations+' omitted by the bounded audit.'));inspection.appendChild(makeElement(document,'p','',audit.qualification));const list=makeElement(document,'ul'),byId=new Map(model.records.map(record=>[record.id,record]));for(const row of audit.results){const item=makeElement(document,'li');for(const [position,id]of [row.outputId,row.activityId].entries()){if(position)item.appendChild(makeElement(document,'span','',' → '));const record=byId.get(id),link=makeElement(document,'a','',record.title);link.href=new URL(record.url,new URL(index.dataset.cvRoot||'./',document.baseURI)).href;item.appendChild(link);}item.appendChild(makeElement(document,'span','',' — '+row.value+': '+row.reasons.map(reason=>reason.replaceAll('-',' ')).join('; ')));list.appendChild(item);}inspection.appendChild(list);output.appendChild(inspection);}
     const controller=createSelectionController({
       isCurrent:identity,
@@ -165,10 +167,10 @@
         const activityOutputOrdering=await feature.auditActivityOutputOrdering(model,data.temporal);check();if(activityOutputOrdering.modelSha256!==data.modelSha256)throw new Error('Ordering source mismatch.');
         const request={literal:input.basicRequest,advanced:input.state,literalPrimaryIds:input.basicIds},requestSha256=await feature.hashCVData(request);check();return{selection,trueIds,unknownRows,falseIds:rows.filter(row=>row.value==='false').map(row=>row.id),request,requestSha256,professional,temporalOrEvidence:tests,activityOutputOrdering};
       },
-      onState:function(update){if(update.status==='loading'){download.disabled=true;status.textContent='Checking the selected public snapshot. The literal index remains available.';}else if(update.status==='ready'){receipt=update.value;selected=new Set(receipt.selection.selectionIds);download.disabled=false;status.textContent=receipt.trueIds.length+' true matches; '+receipt.unknownRows.length+' unknown; '+receipt.falseIds.length+' false within the selected public scope. '+(selected.size-receipt.selection.primaryIds.length)+' additional records preserve context and evidence.';showUnknown(receipt.unknownRows);const inspection=makeElement(document,'details','cv-source-inspection'),list=makeElement(document,'dl');inspection.appendChild(makeElement(document,'summary','','Inspect selection scope and source identity'));for(const [label,value]of [['Public snapshot as of',model.asOf],['Published model SHA-256',receipt.selection.modelSha256],['Selection SHA-256',receipt.selection.selectionSha256],['Scope',receipt.selection.qualification]]){list.appendChild(makeElement(document,'dt','',label));list.appendChild(makeElement(document,'dd','',value));}inspection.appendChild(list);output.appendChild(inspection);showOrdering(receipt.activityOutputOrdering);callbacks.apply();}else{selected=null;receipt=null;download.disabled=true;output.replaceChildren();status.textContent=update.status==='cancelled'?'Optional selection cancelled. Literal filters and authored records remain available.':'Optional selection is unavailable or stale. Literal filters and authored records remain available.';callbacks.apply();}}
+      onState:function(update){if(update.status==='loading'){download.disabled=true;status.textContent='Checking the selected public snapshot. The literal index remains available.';}else if(update.status==='ready'){receipt=update.value;selected=new Set(receipt.selection.selectionIds);download.disabled=false;status.textContent=receipt.trueIds.length+' true matches; '+receipt.unknownRows.length+' unknown; '+receipt.falseIds.length+' false within the selected public scope. '+(selected.size-receipt.selection.primaryIds.length)+' additional records preserve context and evidence.';showUnknown(receipt.unknownRows);const inspection=makeElement(document,'details','cv-source-inspection'),list=makeElement(document,'dl');inspection.appendChild(makeElement(document,'summary','','Inspect selection scope and source identity'));for(const [label,value]of [['Public snapshot as of',model.asOf],['Published model SHA-256',receipt.selection.modelSha256],['Selection SHA-256',receipt.selection.selectionSha256],['Scope',receipt.selection.qualification]]){list.appendChild(makeElement(document,'dt','',label));list.appendChild(makeElement(document,'dd','',value));}inspection.appendChild(list);output.appendChild(inspection);showOrdering(receipt.activityOutputOrdering);callbacks.apply();}else{selected=null;receipt=null;download.disabled=true;replaceOwnedOutput();status.textContent=update.status==='cancelled'?'Optional selection cancelled. Literal filters and authored records remain available.':'Optional selection is unavailable or stale. Literal filters and authored records remain available.';callbacks.apply();}}
     });
     function run(){selected=null;receipt=null;download.disabled=true;if(!active()){controller.cancel();return;}const input={state:state(),basicRequest:callbacks.basicRequest(),basicIds:callbacks.basicIds(),modelText:modelMarker.textContent,featureText:marker.textContent,provider:provider()};controller.run(input);}
-    function clear(){controller.cancel();for(const control of [project,evidence,operation,service])control.value='';unknown.value='exclude';selected=null;receipt=null;download.disabled=true;output.replaceChildren();visibility();callbacks.apply();}
+    function clear(){controller.cancel();for(const control of [project,evidence,operation,service])control.value='';unknown.value='exclude';selected=null;receipt=null;download.disabled=true;replaceOwnedOutput();visibility();callbacks.apply();}
     function visibility(){at.parentElement.hidden=!(operation.value==='as-of'||service.value==='offered');from.parentElement.hidden=through.parentElement.hidden=!operation.value||operation.value==='as-of';}
     apply.addEventListener('click',run);cancel.addEventListener('click',()=>controller.cancel());reset.addEventListener('click',clear);operation.addEventListener('change',visibility);service.addEventListener('change',visibility);
     for(const control of [project,evidence,operation,at,from,through,service,unknown])control.addEventListener('change',function(){controller.cancel();selected=null;receipt=null;download.disabled=true;callbacks.apply();});
@@ -177,7 +179,7 @@
     providerReady();visibility();return{selectedIds:()=>selected?[...selected]:null,active,run,clear,cancel:()=>controller.cancel()};
   }
 
-  function enhanceIndex(index, suffix, document, view) {
+  function enhanceIndex(index, suffix, document, view, initialState) {
     if (index.dataset.cvEnhanced === "true" || index.dataset.cvLazy === "true") return;
     // Nested indexes own their entries; a filter must never hide another index.
     const elements = Array.from(index.querySelectorAll(".cv-entry")).filter(function (entry) {
@@ -238,12 +240,14 @@
 
     let previewDialog=null;
     let advanced=null;
-    advanced=advancedFilters(index,controls,document,view,publicModel,records,{basicRequest:function(){return{query:query.value,type:type.value,skill:skill.value};},basicIds:function(){const filter=compileFilter({query:query.value,type:type.value,skill:skill.value});return records.filter(record=>matchesFilter(record,filter)).map(record=>record.id);},apply:function(){apply(false,true,true);}});
+    const advancedTools=makeElement(document,'section','cv-advanced-tools');advancedTools.setAttribute('aria-label','Optional compound CV filters');
+    advanced=advancedFilters(index,advancedTools,document,view,publicModel,records,{basicRequest:function(){return{query:query.value,type:type.value,skill:skill.value};},basicIds:function(){const filter=compileFilter({query:query.value,type:type.value,skill:skill.value});return records.filter(record=>matchesFilter(record,filter)).map(record=>record.id);},apply:function(){apply(false,true,true);}});
+    if(advanced)index.appendChild(advancedTools);
     // Exports use the projected structured model, never the live filtered DOM.
     if (index.dataset.cvExports === "true") {
       const exportStatus=makeElement(document,"p","cv-export-status");
       exportStatus.setAttribute("role","status");
-      const previewButton=makeElement(document,"button","cv-export-preview","Preview matching records for download");
+      const previewButton=makeElement(document,"button","cv-export-preview cv-export-trigger","Preview matching records for download");
       previewButton.type="button";controls.appendChild(previewButton);controls.appendChild(exportStatus);
       let model=null;
       const exportBase=new URL(index.dataset.cvRoot||'./',document.baseURI).href;
@@ -323,7 +327,8 @@
     }
 
     function restore() {
-      const state = readState(view && view.location ? view.location.search : "", types, skills, suffix);
+      const state = readState(initialState ? new URL(updateUrl(view.location.href, initialState, suffix)).search : view && view.location ? view.location.search : "", types, skills, suffix);
+      initialState = null;
       query.value = state.query;
       type.value = state.type;
       skill.value = state.skill;
@@ -387,10 +392,10 @@
     restore();
   }
 
-  function initialize(document) {
+  function initialize(document, initial) {
     const view = document.defaultView || global;
     Array.from(document.querySelectorAll(".cv-index")).forEach(function (index, number) {
-      enhanceIndex(index, number === 0 ? "" : String(number + 1), document, view);
+      enhanceIndex(index, number === 0 ? "" : String(number + 1), document, view, initial && initial.index === index ? initial.state : null);
     });
   }
 

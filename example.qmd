@@ -125,7 +125,17 @@ review process. No author-written JavaScript or model is required.
 
 ## Optional progressive source project
 
+Search and public records appear before optional compound and source tools.
+Open their native disclosures when needed; cancellation and status remain
+available when the inputs are collapsed. Selected previews show a white paper
+document with black text, separately from the page's themed controls.
+
 Open the source folder `examples/lazy` in the editor for the ordinary project-based lazy-detail exercise. Its index.qmd explains Render Project and optional companion setup. This is a source-folder link, not a promise that standalone rendering copied another rendered guide page.
+
+Loading the complete public catalogue retains current filters. If that action
+replaces your focused control or record, focus moves to its full-reader
+equivalent; moving elsewhere while loading keeps your chosen focus. A delivery
+failure is announced and leaves the native summaries and source links available.
 
 ## Optional professional draft with a page model
 

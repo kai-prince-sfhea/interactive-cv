@@ -129,7 +129,7 @@
     const selected = selectRecords(model, selectedIds), baseUrl = options && options.baseUrl;
     // A modal is inside the native page's main landmark; a standalone print
     // document owns its own main. Keep the structured public content identical.
-    const main = element(document, options && options.embedded === true ? "section" : "main"); main.className = "cv-export-preview";
+    const main = element(document, options && options.embedded === true ? "section" : "main"); main.className = "cv-export-preview cv-export-document";
     main.appendChild(element(document, "h1", "Selected CV records"));
     main.appendChild(element(document, "p", "Public snapshot as of " + model.asOf + ". " + selected.length + " selected record(s)."));
     main.appendChild(element(document, "p", "Wording and stated review/evidence qualifiers are retained. Missing end dates do not mean current appointments. This selection is not the complete CV."));
@@ -238,7 +238,7 @@
     document.title = "Selected CV records";
     const meta = document.createElement("meta"); meta.charset = "utf-8"; document.head.appendChild(meta);
     const style = document.createElement("style");
-    style.textContent = "body{font-family:system-ui,sans-serif;max-width:55rem;margin:2rem auto;padding:0 1rem;line-height:1.5}dt{font-weight:700}dd{margin-left:1rem;overflow-wrap:anywhere}section{margin-block:2rem}a{overflow-wrap:anywhere}button{font:inherit;padding:.5rem 1rem;margin-right:.5rem}h2{break-after:avoid}@media print{.cv-print-controls{display:none}body{margin:0;max-width:none}a{color:inherit}}";
+    style.textContent = "html{color-scheme:light}body{color:#000;background:#fff;font-family:system-ui,sans-serif;max-width:55rem;margin:2rem auto;padding:0 1rem;line-height:1.5}dt{font-weight:700}dd{margin-left:1rem;overflow-wrap:anywhere}section{margin-block:2rem}a{color:#0645ad;overflow-wrap:anywhere}button{color:#000;background:#fff;border:1px solid #000;font:inherit;min-height:44px;max-width:100%;white-space:normal;padding:.5rem 1rem;margin:.25rem;box-sizing:border-box}button:focus-visible,a:focus-visible{outline:3px solid currentColor;outline-offset:3px}h2{break-after:avoid}@media print{.cv-print-controls{display:none}body{margin:0;max-width:none}a{color:inherit}}";
     document.head.appendChild(style);
     const controls = element(document, "div"); controls.className = "cv-print-controls";
     controls.appendChild(element(document, "p", "Use the browser print dialog and choose Save as PDF where available. PDF tagging, font coverage and page layout depend on your browser; this is not a PDF/UA guarantee. Print headers/footers may include the browser URL; review the preview before saving."));

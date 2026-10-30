@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.0.11 — reader hierarchy, themes and progressive focus — 30 October 2026
+
+When advanced selection replaces a focused result, hand focus to the existing live status only while that discarded output owns focus. Preserve literal/native filters, current-source and epoch guards, result contents, input/Apply focus and reader movement.
+
+Local and unpublished. Keep primary search and public records before optional
+compound/source tools. Native disclosures hold optional inputs; cancellation,
+status and completed output remain outside. Preserve direct-child source
+ownership and all explicit extraction, provider, candidate and export actions.
+Pair control, file-button and dialog colours under native themes, distinguish
+preview triggers from paper documents while retaining the legacy class alias,
+and wrap long public source tokens. Native source quotations inherit the page
+foreground, including quotations outside the enhanced index.
+
+Complete lazy loading retains current filters and transfers focus only when the
+current control or record is replaced; a reader who moved elsewhere keeps focus.
+Busy complete-load triggers retain keyboard focus. Removed optional output and
+newly unavailable provider actions receive an owned focus handoff. Initial
+delivery failures update the existing polite status and preserve native content.
+Selected Word, print, authored graph placement, source/qualification data and
+model-consent boundaries remain unchanged. Pure regressions are separate from
+native/browser verification, human accessibility and release acceptance.
+
 ## 0.0.10 — detail-only graph observations — 28 October 2026
 
 Local and unpublished. Correct the graph-publication gate so ordinary `.cv-record`

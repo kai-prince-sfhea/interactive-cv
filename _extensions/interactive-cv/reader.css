@@ -28,11 +28,11 @@
 .cv-filter-label input,
 .cv-filter-label select,
 .cv-reset {
-  background: Canvas;
+  background: var(--bs-body-bg, Canvas);
   box-sizing: border-box;
   border: 1px solid currentColor;
   border-radius: 0.2rem;
-  color: CanvasText;
+  color: var(--bs-body-color, CanvasText);
   font: inherit;
   min-height: 2.75rem;
   padding: 0.5rem;
@@ -57,8 +57,11 @@
   display: none;
 }
 
-.cv-export-preview { font: inherit; margin-block-start: .75rem; padding: .5rem; }
-.cv-export-dialog { max-width: min(55rem, 90vw); max-height: 85vh; overflow: auto; }
+.cv-export-trigger { margin-block-start: .75rem; }
+.cv-export-document { color: #000; background: #fff; color-scheme: light; font: inherit; margin-block-start: .75rem; padding: 1rem; overflow-wrap: anywhere; }
+.cv-export-document :is(h1,h2,h3,h4,p,dt,dd,blockquote) { color: inherit; opacity: 1; }
+.cv-export-document a { color: #0645ad; }
+.cv-export-dialog { color: var(--bs-body-color, CanvasText); background: var(--bs-body-bg, Canvas); border: 1px solid currentColor; box-sizing: border-box; max-width: min(55rem, 90vw); max-height: 85vh; overflow: auto; overflow-wrap: anywhere; }
 .cv-export-dialog::backdrop { background: rgb(0 0 0 / 55%); }
 .cv-export-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
 .cv-export-actions button { font: inherit; min-height: 2.75rem; padding: .5rem; }
@@ -79,17 +82,30 @@
 .cv-advanced { border-block-start: 1px solid currentColor; margin-block-start: 1rem; padding-block-start: .5rem; }
 .cv-advanced > summary { cursor: pointer; min-height: 2.75rem; padding-block: .5rem; }
 .cv-advanced .cv-filter-fields { margin-block: .75rem; }
-.cv-advanced button { background: Canvas; color: CanvasText; border: 1px solid currentColor; border-radius: .2rem; font: inherit; min-height: 2.75rem; padding: .5rem; }
+.cv-advanced button { background: var(--bs-body-bg, Canvas); color: var(--bs-body-color, CanvasText); border: 1px solid currentColor; border-radius: .2rem; font: inherit; min-height: 2.75rem; padding: .5rem; }
 .cv-selection-reasons { overflow-wrap: anywhere; }
 .cv-source-inspection dt { font-weight: 700; }
 .cv-source-inspection dd { margin-inline-start: 1rem; overflow-wrap: anywhere; }
 
 /* Private R6 scoped controls; native source summaries remain printable. */
-.cv-r6-controls,.cv-lazy-controls{margin-block:1rem;padding:1rem;border:1px solid currentColor;border-radius:.25rem}
+.cv-r6-controls,.cv-lazy-controls,.cv-advanced-tools{margin-block:1rem;padding:var(--cv-control-padding,1rem);border:1px solid currentColor;border-radius:var(--cv-control-radius,.25rem);min-width:0;max-width:100%;box-sizing:border-box;overflow-wrap:anywhere}
 .cv-r6-controls label,.cv-lazy-controls label{display:block;margin-block:.6rem}
-.cv-r6-controls button,.cv-r6-controls input,.cv-r6-controls select,.cv-lazy-controls button,.cv-lazy-controls input,.cv-lazy-controls select,.cv-load-detail{min-height:44px;max-width:100%;font:inherit;margin:.2rem}
-.cv-r6-controls button:focus-visible,.cv-lazy-controls button:focus-visible,.cv-load-detail:focus-visible{outline:3px solid currentColor;outline-offset:3px}
+.cv-index :is(button,input,select),.cv-export-actions button{background:var(--bs-body-bg,Canvas);color:var(--bs-body-color,CanvasText);border:1px solid currentColor;border-radius:.2rem;box-sizing:border-box;min-height:2.75rem;min-width:0;max-width:100%;font:inherit;padding:.5rem}
+.cv-index :is(button,input,select){margin-block:.25rem}
+.cv-index button,.cv-export-actions button{white-space:normal;overflow-wrap:anywhere}
+.cv-index input[type=file]{width:100%}
+.cv-index input::file-selector-button{background:var(--bs-body-bg,Canvas);color:var(--bs-body-color,CanvasText);border:1px solid currentColor;border-radius:.2rem;box-sizing:border-box;font:inherit;min-height:2.75rem;min-width:0;max-width:100%;white-space:normal;margin-inline-end:.5rem}
+.cv-index :is(button,input,select,summary,a):focus-visible,.cv-export-dialog :focus-visible{outline:3px solid currentColor;outline-offset:3px}
+.cv-index summary{cursor:pointer;min-height:2.75rem;box-sizing:border-box;padding-block:.5rem;overflow-wrap:anywhere}
+.cv-r6-controls :is(input,select){margin-inline:0}
+.cv-r6-controls button{margin-inline:0 .4rem;max-width:calc(100% - .4rem)}
+.cv-r6-controls :is(input,select),.cv-lazy-controls :is(input,select){display:block;max-width:100%}
+.cv-r6-status:focus{outline:3px solid currentColor;outline-offset:3px}
+.cv-index :is(button,input,select):disabled,.cv-index [aria-disabled=true]{opacity:1;border-style:dashed;cursor:default}
 .cv-r6-output pre{white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%}
 .cv-loaded-detail{border-inline-start:3px solid currentColor;padding-inline-start:1rem;margin-block:1rem}
-@media print{.cv-r6-controls,.cv-lazy-controls,.cv-load-detail{display:none!important}.cv-index[data-cv-lazy="true"] .cv-entry{display:block!important}}
-@media(forced-colors:active){.cv-r6-controls,.cv-lazy-controls,.cv-loaded-detail{border-color:CanvasText}}
+.cv-r6-native blockquote{color:inherit;opacity:1}
+.cv-r6-native,.cv-source-review code,.cv-period-reports code,.cv-r6-output,.cv-professional-delivery,.cv-professional-candidate{overflow-wrap:anywhere;min-width:0;max-width:100%}
+.cv-source-review code,.cv-period-reports code{white-space:normal}
+@media print{.cv-r6-controls,.cv-lazy-controls,.cv-load-detail,.cv-advanced-tools{display:none!important}.cv-index[data-cv-lazy="true"] .cv-entry{display:block!important}}
+@media(forced-colors:active){.cv-r6-controls,.cv-lazy-controls,.cv-loaded-detail,.cv-advanced-tools,.cv-export-dialog{border-color:CanvasText}.cv-export-document{color:CanvasText;background:Canvas}.cv-export-document a{color:LinkText}}
